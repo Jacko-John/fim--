@@ -11,3 +11,11 @@ npm install
 ```
 
 2. Run the FIM-- extension using the command `F5`
+
+## Before PR
+
+Before submitting a PR, make sure to run the following command:
+
+```
+npm run format
+```
