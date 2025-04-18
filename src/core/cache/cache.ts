@@ -12,6 +12,8 @@ export class Cache<T extends {}> {
    * @param options 缓存选项
    */
   constructor(options: CacheOption) {
+    options.max = options.max || DefaultCacheOption.max;
+    options.maxAge = options.maxAge || DefaultCacheOption.maxAge;
     this.cache = new LRUCache(options);
   }
 
@@ -54,6 +56,11 @@ export class Cache<T extends {}> {
 export type CacheOption = {
   max: number; // 最大缓存数量
   maxAge: number; // 最大缓存时间，单位：豪秒
+};
+
+export const DefaultCacheOption: CacheOption = {
+  max: 500,
+  maxAge: 1000 * 60 * 60 * 24, // 24小时
 };
 
 /**
