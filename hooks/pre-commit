@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# 运行 linting 脚本
+npm run format
+
+# 检查 linting 脚本是否成功
+if [ $? -ne 0 ]; then
+  echo "Formating failed, please fix the issues before committing."
+  exit 1
+fi
+
+exit 0
