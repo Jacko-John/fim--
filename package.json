@@ -50,7 +50,10 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "axios": "^1.8.4",
     "lru-cache": "^11.1.0",
+    "openai": "^4.95.1",
     "prettier": "^3.5.3",
     "tree-sitter": "^0.22.4"
   }
