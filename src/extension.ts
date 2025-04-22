@@ -1,6 +1,9 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import { getCodeContext } from "./core/context/codeContext";
+import { CURSOR_HOLDER } from "./globalConst";
+import { FIMController } from "./core/control";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -20,7 +23,18 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(disposable);
 
-  require("./core/context/codeContext").activate(context);
+  const fimController = new FIMController();
+  let debounceTimer: string | number | NodeJS.Timeout | undefined;
+  const documentChangeListener = vscode.workspace.onDidChangeTextDocument((event) => {
+    const editor = vscode.window.activeTextEditor;
+    if (editor && event.document === editor.document) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fimController.run(editor);
+      }, 500);
+    }
+  });
+  context.subscriptions.push(documentChangeListener);
 }
 
 // This method is called when your extension is deactivated

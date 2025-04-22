@@ -1,9 +1,26 @@
-import { Cache, CacheOption, DefaultCacheOption } from "./cache/cache";
+import { Cache, CacheOption, DefaultCacheOption, DefaultCacheType } from "./cache/cache";
+import * as vscode from "vscode";
+import { CodeContext, getCodeContext } from "./context/codeContext";
+import { CURSOR_HOLDER, RAW_SNIPPET } from "../globalConst";
+import { Hasher } from "./cache/hash";
 
-abstract class FIMController {
-  abstract cache: Cache<string>;
+interface ControllSession {
+  ctx: CodeContext;
+  hashKey: string;
+  cancel: boolean;
+  needRequest: boolean;
+  completions: string[];
+}
+
+export class FIMController {
+  cache: Cache<DefaultCacheType>;
+  hasher: Hasher;
+  editor: vscode.TextEditor | undefined;
   config: any;
-  constructor() {}
+  constructor() {
+    this.cache = new Cache(DefaultCacheOption);
+    this.hasher = new Hasher(RAW_SNIPPET);
+  }
   /**
    * 获取上下文
    *
@@ -13,13 +30,22 @@ abstract class FIMController {
    * @param session 控制会话对象，包含会话的相关信息和状态
    * @returns 应返回一个上下文对象，为了简洁，复用传入的session对象
    */
-  getCtx(session: ControllSession) {}
+  async getCtx(session: ControllSession) {
+    session.ctx = getCodeContext(this.editor);
+    // 以下是debug信息
+    const mid =
+      session.ctx.middle.slice(0, session.ctx.cursor.col) +
+      CURSOR_HOLDER +
+      session.ctx.middle.slice(session.ctx.cursor.col);
+    const fullCode = session.ctx.prefix + "\n" + mid + "\n" + session.ctx.suffix;
+    console.log(fullCode);
+  }
   /**
    * 此函数主要为会话对象附上配置信息
    *
    * @param session 会话配置对象，包含了配置信息
    */
-  checkConfig(session: ControllSession) {}
+  async checkConfig(session: ControllSession) {}
   /**
    * 检查缓存有效性
    * 此函数用于检查给定会话的缓存是否仍然有效它通常在执行较重的操作之前调用，
@@ -27,7 +53,18 @@ abstract class FIMController {
    *
    * @param session 控制会话对象，包含会话的相关信息和缓存数据
    */
-  checkCache(session: ControllSession) {}
+  async checkCache(session: ControllSession) {
+    if (session.cancel) {
+      return;
+    }
+    session.hashKey = this.hasher.hashSnippet(session.ctx.prefix + session.ctx.suffix);
+    const cacheData = this.cache.get(session.hashKey);
+    if (cacheData && cacheData?.completions.length > 0) {
+      session.completions = cacheData.completions;
+    } else {
+      session.needRequest = true;
+    }
+  }
   /**
    * 请求API接口
    *
@@ -36,7 +73,7 @@ abstract class FIMController {
    *
    * @param session 控制会话的实例，包含请求API所需的所有上下文信息
    */
-  requestApi(session: ControllSession) {}
+  async requestApi(session: ControllSession) {}
   /**
    * 显示结果
    *
@@ -45,40 +82,36 @@ abstract class FIMController {
    *
    * @param session 控制会话的实例，包含会话所需的各种数据
    */
-  showResult(session: ControllSession) {}
+  async showResult(session: ControllSession) {}
   /**
    * 按下tab键补全
    *
    * @param session 控制会话的实例，包含会话所需的各种数据
    */
-  hookTab(session: ControllSession) {}
-}
+  async hookTab(session: ControllSession) {}
 
-interface ControllSession {
-  ctx: any;
-  cancel: boolean;
-  needRequest: boolean;
-  completions: string[];
-}
-
-export class FIMControllerImpl extends FIMController {
-  cache: Cache<string>;
-  constructor() {
-    super();
-    this.cache = new Cache(DefaultCacheOption);
-  }
-  register() {}
-  run() {
-    var session: ControllSession = {
-      ctx: undefined,
+  async run(editor: vscode.TextEditor) {
+    const session: ControllSession = {
+      ctx: {
+        prefix: "",
+        suffix: "",
+        middle: "",
+        cursor: {
+          line: 0,
+          col: 0,
+        },
+      },
+      hashKey: "",
       cancel: false,
       needRequest: false,
       completions: [],
     };
-    this.getCtx(session);
-    this.checkConfig(session);
-    this.checkCache(session);
-    this.requestApi(session);
-    this.showResult(session);
+    this.editor = editor;
+    await this.getCtx(session);
+    console.log(session.ctx);
+    await this.checkConfig(session);
+    await this.checkCache(session);
+    await this.requestApi(session);
+    await this.showResult(session);
   }
 }
