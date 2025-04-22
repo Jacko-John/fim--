@@ -83,7 +83,7 @@ export class DeepSeekHandler implements ApiHandler {
    * @returns 流式补全结果
    */
   async streamCompletion(
-    params: DeepSeekCodeCompletionConfig,
+    params: DeepSeekCodeCompletionConfig
   ): Promise<ApiStream> {
     const streamParams = { ...params, stream: true };
 
@@ -133,7 +133,7 @@ export class DeepSeekHandler implements ApiHandler {
       suffix?: string;
       language?: string;
     },
-    options?: Partial<DeepSeekCodeCompletionConfig>,
+    options?: Partial<DeepSeekCodeCompletionConfig>
   ) {
     const builder = this.createRequestBuilder().withPrompt(codeContext.prefix);
 
