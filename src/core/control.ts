@@ -1,4 +1,9 @@
-import { Cache, CacheOption, DefaultCacheOption, DefaultCacheType } from "./cache/cache";
+import {
+  Cache,
+  CacheOption,
+  DefaultCacheOption,
+  DefaultCacheType,
+} from "./cache/cache";
 import * as vscode from "vscode";
 import { CodeContext, getCodeContext } from "./context/codeContext";
 import { CURSOR_HOLDER, RAW_SNIPPET } from "../globalConst";
@@ -37,7 +42,8 @@ export class FIMController {
       session.ctx.middle.slice(0, session.ctx.cursor.col) +
       CURSOR_HOLDER +
       session.ctx.middle.slice(session.ctx.cursor.col);
-    const fullCode = session.ctx.prefix + "\n" + mid + "\n" + session.ctx.suffix;
+    const fullCode =
+      session.ctx.prefix + "\n" + mid + "\n" + session.ctx.suffix;
     console.log(fullCode);
   }
   /**
@@ -57,7 +63,9 @@ export class FIMController {
     if (session.cancel) {
       return;
     }
-    session.hashKey = this.hasher.hashSnippet(session.ctx.prefix + session.ctx.suffix);
+    session.hashKey = this.hasher.hashSnippet(
+      session.ctx.prefix + session.ctx.suffix,
+    );
     const cacheData = this.cache.get(session.hashKey);
     if (cacheData && cacheData?.completions.length > 0) {
       session.completions = cacheData.completions;

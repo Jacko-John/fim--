@@ -7,7 +7,9 @@ export interface CodeContext {
   middle: string;
   cursor: { line: number; col: number };
 }
-export function getCodeContext(editor: vscode.TextEditor | undefined): CodeContext {
+export function getCodeContext(
+  editor: vscode.TextEditor | undefined,
+): CodeContext {
   if (!editor) {
     return {
       prefix: "",
@@ -25,13 +27,19 @@ export function getCodeContext(editor: vscode.TextEditor | undefined): CodeConte
   const suffixL = Math.min(document.lineCount, position.line + offset);
 
   // 提取前缀和后缀
-  const prefixLines = Array.from({ length: position.line - prefixL }, (_, i) => {
-    return document.lineAt(prefixL + i).text;
-  }).join("\n");
+  const prefixLines = Array.from(
+    { length: position.line - prefixL },
+    (_, i) => {
+      return document.lineAt(prefixL + i).text;
+    },
+  ).join("\n");
 
-  const suffixLines = Array.from({ length: suffixL - position.line - 1 }, (_, i) => {
-    return document.lineAt(position.line + 1 + i).text;
-  }).join("\n");
+  const suffixLines = Array.from(
+    { length: suffixL - position.line - 1 },
+    (_, i) => {
+      return document.lineAt(position.line + 1 + i).text;
+    },
+  ).join("\n");
 
   return {
     prefix: prefixLines,

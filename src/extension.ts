@@ -25,15 +25,17 @@ export function activate(context: vscode.ExtensionContext) {
 
   const fimController = new FIMController();
   let debounceTimer: string | number | NodeJS.Timeout | undefined;
-  const documentChangeListener = vscode.workspace.onDidChangeTextDocument((event) => {
-    const editor = vscode.window.activeTextEditor;
-    if (editor && event.document === editor.document) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        fimController.run(editor);
-      }, 500);
-    }
-  });
+  const documentChangeListener = vscode.workspace.onDidChangeTextDocument(
+    (event) => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor && event.document === editor.document) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          fimController.run(editor);
+        }, 500);
+      }
+    },
+  );
   context.subscriptions.push(documentChangeListener);
 }
 
