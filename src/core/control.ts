@@ -37,7 +37,7 @@ export class FIMController {
    * @returns 应返回一个上下文对象，为了简洁，复用传入的session对象
    */
   async getCtx(session: ControllSession) {
-    session.ctx = getCodeContext(this.editor);
+    session.ctx = await getCodeContext(this.editor);
     // 以下是debug信息
     const mid =
       session.ctx.middle.slice(0, session.ctx.cursor.col) +
@@ -92,7 +92,7 @@ export class FIMController {
    * @param session 控制会话的实例，包含会话所需的各种数据
    */
   async showResult(session: ControllSession) {
-    insertCode.call(this, session);
+    await insertCode(this.editor, session.completions);
   }
   /**
    * 按下tab键补全
