@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 import { CodeContext, getCodeContext } from "./context/codeContext";
 import { CURSOR_HOLDER, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
+import { insertCode } from "./insert/insert";
 
 interface ControllSession {
   ctx: CodeContext;
@@ -85,12 +86,14 @@ export class FIMController {
   /**
    * 显示结果
    *
-   * 此函数用于展示控制会话中的结果它接收一个ControllSession实例作为参数，
+   * 此函数用于展示控制会话中的结果，它接收一个ControllSession实例作为参数，
    * 通过这个实例可以访问会话中的各种数据，从而进行结果的显示
    *
    * @param session 控制会话的实例，包含会话所需的各种数据
    */
-  async showResult(session: ControllSession) {}
+  async showResult(session: ControllSession) {
+    insertCode.call(this, session);
+  }
   /**
    * 按下tab键补全
    *
