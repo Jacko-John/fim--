@@ -5,7 +5,6 @@ interface hashFunction {
 }
 
 export class Hasher {
-  private _hasher: crypto.Hash;
   hashSnippet: hashFunction;
   /**
    * 创建Hasher实例
@@ -15,7 +14,6 @@ export class Hasher {
     if (hashType !== "RAW_SNIPPET" && hashType !== "AST_SNIPPET") {
       throw new Error(`Invalid hash type: ${hashType}`);
     }
-    this._hasher = crypto.createHash("sha256", { outputLength: 64 });
     switch (hashType) {
       case "RAW_SNIPPET":
         this.hashSnippet = this.rawSnippetHash;
@@ -34,7 +32,7 @@ export class Hasher {
    * @returns hash值
    */
   private rawSnippetHash(snippet: string): string {
-    return this._hasher.update(snippet).digest("hex");
+    return crypto.createHash("sha256").update(snippet).digest("hex");
   }
 
   /**
