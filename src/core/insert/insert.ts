@@ -13,29 +13,27 @@ export async function insertCode(
   editor: vscode.TextEditor | undefined,
   completions: string[],
 ) {
-  return new Promise(async () => {
-    if (!editor) {
-      return;
-    }
-    if (completions.length === 0) {
-      vscode.window.showInformationMessage("没有可用的补全结果。");
-      return;
-    }
+  if (!editor) {
+    return;
+  }
+  if (completions.length === 0) {
+    vscode.window.showInformationMessage("没有可用的补全结果。");
+    return;
+  }
 
-    // 默认选择第一个补全结果
-    const selectedCompletion = completions[0];
+  // 默认选择第一个补全结果
+  const selectedCompletion = completions[0];
 
-    // 获取当前光标位置
-    const position = editor.selection.active;
+  // 获取当前光标位置
+  const position = editor.selection.active;
 
-    // 使用编辑器的编辑功能插入补全内容
-    await editor.edit(
-      (editBuilder: { insert: (arg0: any, arg1: string) => void }) => {
-        editBuilder.insert(position, selectedCompletion);
-      },
-    );
+  // 使用编辑器的编辑功能插入补全内容
+  await editor.edit(
+    (editBuilder: { insert: (arg0: any, arg1: string) => void }) => {
+      editBuilder.insert(position, selectedCompletion);
+    },
+  );
 
-    // 可选：显示通知，提示用户补全已插入
-    vscode.window.showInformationMessage("补全已插入！");
-  });
+  // 可选：显示通知，提示用户补全已插入
+  vscode.window.showInformationMessage("补全已插入！");
 }
