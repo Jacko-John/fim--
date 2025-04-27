@@ -1,19 +1,10 @@
 import * as vscode from "vscode";
+import { CodeContext } from "../../shared/contex";
 
-export interface CodeContext {
-  prefix: string;
-  suffix: string;
-  middle: string;
-  cursor: { line: number; col: number };
-}
-export function getCodeContext(editor: vscode.TextEditor | undefined) {
+export function getCodeContext(editor: vscode.TextEditor): CodeContext {
+  let ctx: CodeContext = new CodeContext();
   if (!editor) {
-    return {
-      prefix: "",
-      suffix: "",
-      middle: "",
-      cursor: { line: 0, col: 0 },
-    };
+    return ctx;
   }
   const document = editor.document;
   const position = editor.selection.active;
@@ -38,10 +29,17 @@ export function getCodeContext(editor: vscode.TextEditor | undefined) {
     },
   ).join("\n");
 
-  return {
-    prefix: prefixLines,
-    suffix: suffixLines,
-    middle: document.lineAt(position.line).text,
-    cursor: { line: position.line, col: position.character },
-  };
+  ctx.prefix = prefixLines;
+  ctx.suffix = suffixLines;
+  ctx.prefixOnCursor = document
+    .lineAt(position.line)
+    .text.slice(0, position.character);
+  ctx.prefixWithMid = prefixLines + "\n" + ctx.prefixOnCursor;
+  ctx.suffixWithMid =
+    document.lineAt(position.line).text.slice(position.character) +
+    "\n" +
+    suffixLines;
+  ctx.cursor = { line: position.line, col: position.character };
+
+  return ctx;
 }
