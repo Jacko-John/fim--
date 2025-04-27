@@ -1,13 +1,4 @@
-import { CodeContext } from "../context/codeContext";
 import * as vscode from "vscode";
-
-interface ControllSession {
-  ctx: CodeContext;
-  hashKey: string;
-  cancel: boolean;
-  needRequest: boolean;
-  completions: string[];
-}
 
 export async function insertCode(
   editor: vscode.TextEditor | undefined,

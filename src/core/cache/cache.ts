@@ -1,4 +1,5 @@
 import { LRUCache } from "lru-cache";
+import { CodeContext } from "../../shared/contex";
 
 /**
  * 缓存类
@@ -69,13 +70,5 @@ export const DefaultCacheOption: CacheOption = {
 export type DefaultCacheType = {
   contextHash: string; // 上下文指纹
   completions: string[]; // 补全建议列表
-  context: SnippetContext; // 上下文内容
-};
-
-/**
- * 代码片段上下文
- */
-export type SnippetContext = {
-  text: string;
-  methods: string[];
+  context: CodeContext; // 上下文内容
 };

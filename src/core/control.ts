@@ -1,41 +1,33 @@
-import {
-  Cache,
-  CacheOption,
-  DefaultCacheOption,
-  DefaultCacheType,
-} from "./cache/cache";
+import { Cache, DefaultCacheOption, DefaultCacheType } from "./cache/cache";
 import * as vscode from "vscode";
-import { CodeContext, getCodeContext } from "./context/codeContext";
-import { CURSOR_HOLDER, RAW_SNIPPET } from "../globalConst";
+import { getCodeContext } from "./context/codeContext";
+import { CURSOR_HOLDER, DEFAULT_CONTEXT, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
 import { insertCode } from "./insert/insert";
+import { CodeContext } from "../shared/contex";
+import { checkFilter } from "./cache/filter";
 
 interface AnyFunc {
   (): void;
 }
 
 class ControllSession {
-  ctx: CodeContext;
-  hashKey: string;
-  cancel: boolean;
-  needRequest: boolean;
-  completions: string[];
+  /** 代码上下文 */
+  ctx: CodeContext = DEFAULT_CONTEXT;
+  /** 上下文哈希值 */
+  hashKey: string = "";
+  /** 是否取消补全 */
+  cancel: boolean = false;
+  /** 补全结果的索引，没有匹配结果则为-1 */
+  completionIndex: number = -1;
+  /** 补全结果 -- 包含当前行
+   * @example completions[completionIndex] = prefixOnCursor + completion
+   */
+  completions: string[] = [];
+  /** 编辑器实例 */
   editor: vscode.TextEditor;
   constructor(editor: vscode.TextEditor) {
     this.editor = editor;
-    this.ctx = {
-      prefix: "",
-      suffix: "",
-      middle: "",
-      cursor: {
-        line: 0,
-        col: 0,
-      },
-    };
-    this.hashKey = "";
-    this.cancel = false;
-    this.needRequest = false;
-    this.completions = [];
   }
 
   /**
@@ -48,13 +40,6 @@ class ControllSession {
    */
   getCtx(): ControllSession {
     this.ctx = getCodeContext(this.editor);
-    // 以下是debug信息
-    const mid =
-      this.ctx.middle.slice(0, this.ctx.cursor.col) +
-      CURSOR_HOLDER +
-      this.ctx.middle.slice(this.ctx.cursor.col);
-    const fullCode = this.ctx.prefix + "\n" + mid + "\n" + this.ctx.suffix;
-    console.log(fullCode);
     return this;
   }
 
@@ -85,8 +70,12 @@ class ControllSession {
     const cacheData = cache.get(this.hashKey);
     if (cacheData && cacheData?.completions.length > 0) {
       this.completions = cacheData.completions;
+      this.completionIndex = checkFilter(
+        this.ctx.prefixOnCursor,
+        this.completions,
+      );
     } else {
-      this.needRequest = true;
+      this.completionIndex = -1;
     }
     return this;
   }
@@ -100,6 +89,9 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   requestApi(): ControllSession {
+    if (this.completionIndex !== -1) {
+      return this;
+    }
     return this;
   }
 
@@ -143,6 +135,9 @@ export class FIMController {
     session
       .getCtx()
       .then(() => {
+        const fullCode =
+          session.ctx.prefixWithMid + CURSOR_HOLDER + session.ctx.suffixWithMid;
+        console.log(fullCode);
         console.log(session.ctx);
       })
       .checkConfig()
