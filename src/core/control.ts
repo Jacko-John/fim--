@@ -23,7 +23,7 @@ class ControllSession {
   /** 补全结果 -- 包含当前行
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
-  completions: string[] = [];
+  completions: string[] = ['1'];  
   /** 编辑器实例 */
   editor: vscode.TextEditor;
   constructor(editor: vscode.TextEditor) {
@@ -144,5 +144,5 @@ export class FIMController {
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .showResult();
-  }
+  } 
 }
