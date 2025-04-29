@@ -23,7 +23,7 @@ class ControllSession {
   /** 补全结果 -- 包含当前行
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
-  completions: string[] = ['1'];  
+  completions: string[] = ["SYSU SSE"];
   /** 编辑器实例 */
   editor: vscode.TextEditor;
   constructor(editor: vscode.TextEditor) {
@@ -72,7 +72,7 @@ class ControllSession {
       this.completions = cacheData.completions;
       this.completionIndex = checkFilter(
         this.ctx.prefixOnCursor,
-        this.completions,
+        this.completions
       );
     } else {
       this.completionIndex = -1;
@@ -144,5 +144,5 @@ export class FIMController {
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .showResult();
-  } 
+  }
 }
