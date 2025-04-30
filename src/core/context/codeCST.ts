@@ -3,14 +3,7 @@ import Parser from "tree-sitter";
 import { CURSOR_HOLDER } from "../../globalConst";
 import { spawn, spawnSync } from "child_process";
 
-export interface CodeCST {
-  tree: Parser.Tree | undefined,
-}
-
-export function getCodeCST(editor: vscode.TextEditor | undefined,
-  ): Promise<CodeCST> {
-  return new Promise<CodeCST>(async () => {
-    const editor = vscode.window.activeTextEditor;
+export function getCodeCST(editor: vscode.TextEditor): Parser.Tree | undefined {
     if(editor){
         const code = editor.document.getText();
         const fileName = editor.document.fileName;
@@ -43,11 +36,8 @@ export function getCodeCST(editor: vscode.TextEditor | undefined,
         console.log('**********');
         console.log(tree.rootNode.toString());
 
-        return {
-            tree,
-        };
+        return tree;
     }
 
-    return { tree: null };
-  });
+    return undefined;
 }
