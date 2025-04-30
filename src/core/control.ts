@@ -6,12 +6,14 @@ import {
 } from "./cache/cache";
 import * as vscode from "vscode";
 import { CodeContext, getCodeContext } from "./context/codeContext";
+import { CodeCST, getCodeCST } from "./context/codeCST";
 import { CURSOR_HOLDER, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
 import { insertCode } from "./insert/insert";
 
 interface ControllSession {
   ctx: CodeContext;
+  cst: CodeCST;
   hashKey: string;
   cancel: boolean;
   needRequest: boolean;
@@ -37,15 +39,16 @@ export class FIMController {
    * @returns 应返回一个上下文对象，为了简洁，复用传入的session对象
    */
   async getCtx(session: ControllSession) {
-    session.ctx = await getCodeContext(this.editor);
+    session.cst = await getCodeCST(this.editor);
     // 以下是debug信息
-    const mid =
-      session.ctx.middle.slice(0, session.ctx.cursor.col) +
-      CURSOR_HOLDER +
-      session.ctx.middle.slice(session.ctx.cursor.col);
-    const fullCode =
-      session.ctx.prefix + "\n" + mid + "\n" + session.ctx.suffix;
-    console.log(fullCode);
+    // const mid =
+    //   session.ctx.middle.slice(0, session.ctx.cursor.col) +
+    //   CURSOR_HOLDER +
+    //   session.ctx.middle.slice(session.ctx.cursor.col);
+    // const fullCode =
+    //   session.ctx.prefix + "\n" + mid + "\n" + session.ctx.suffix;
+    // console.log(fullCode);
+    console.log(session.cst.tree?.rootNode.toString());
   }
   /**
    * 此函数主要为会话对象附上配置信息
@@ -111,6 +114,9 @@ export class FIMController {
           line: 0,
           col: 0,
         },
+      },
+      cst: {
+        tree: undefined,
       },
       hashKey: "",
       cancel: false,
