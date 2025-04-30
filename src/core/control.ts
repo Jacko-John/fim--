@@ -1,11 +1,13 @@
 import { Cache, DefaultCacheOption, DefaultCacheType } from "./cache/cache";
 import * as vscode from "vscode";
 import { getCodeContext } from "./context/codeContext";
+import { getCodeCST } from "./context/codeCST";
 import { CURSOR_HOLDER, DEFAULT_CONTEXT, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
 import { insertCode } from "./insert/insert";
 import { CodeContext } from "../shared/contex";
 import { checkFilter } from "./cache/filter";
+import Parser from "tree-sitter";
 
 interface AnyFunc {
   (): void;
@@ -14,6 +16,8 @@ interface AnyFunc {
 class ControllSession {
   /** 代码上下文 */
   ctx: CodeContext = DEFAULT_CONTEXT;
+  /** 代码CST */
+  cst: Parser.Tree | undefined = undefined;
   /** 上下文哈希值 */
   hashKey: string = "";
   /** 是否取消补全 */
@@ -40,6 +44,19 @@ class ControllSession {
    */
   getCtx(): ControllSession {
     this.ctx = getCodeContext(this.editor);
+    return this;
+  }
+
+  /**
+   * 获取CST
+   *
+   * 此函数用于获取代码的抽象语法树（CST），它通常用于分析和处理代码结构
+   * 该函数会将获取到的CST存储在当前会话对象中，以便后续使用
+   *
+   * @returns 应返回当前上下文对象，用于链式调用
+   */
+  getCST(): ControllSession {
+    this.cst = getCodeCST(this.editor);
     return this;
   }
 
@@ -134,6 +151,7 @@ export class FIMController {
     const session = new ControllSession(editor);
     session
       .getCtx()
+      .getCST()
       .then(() => {
         const fullCode =
           session.ctx.prefixWithMid + CURSOR_HOLDER + session.ctx.suffixWithMid;
