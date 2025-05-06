@@ -1,42 +1,48 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { getCodeContext } from "./core/context/codeContext";
-import { CURSOR_HOLDER } from "./globalConst";
 import { FIMController } from "./core/control";
+import { InsertionStateManager } from "./core/insert/InsertionStateManager";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "fim--" is now active!');
-
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  const disposable = vscode.commands.registerCommand("fim--.helloWorld", () => {
-    // The code you place here will be executed every time your command is executed
-    // Display a message box to the user
-    vscode.window.showInformationMessage("Hello World from FIM--!");
-  });
-
-  context.subscriptions.push(disposable);
 
   const fimController = new FIMController();
   let debounceTimer: string | number | NodeJS.Timeout | undefined;
-  const documentChangeListener = vscode.workspace.onDidChangeTextDocument(
-    (event) => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor && event.document === editor.document) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          fimController.run(editor);
-        }, 500);
-      }
-    },
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    const editor = vscode.window.activeTextEditor;
+    if (editor && event.document === editor.document) {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fimController.run(editor);
+      }, 500);
+    }
+  });
+
+  vscode.window.onDidChangeTextEditorSelection(() => {
+    InsertionStateManager.hasActiveSession() && InsertionStateManager.clear();
+  });
+
+  context.subscriptions.push(
+    vscode.commands.registerTextEditorCommand(
+      "fim--.acceptCompletionWithTab",
+      async (editor, edit) => {
+        if (editor && InsertionStateManager.hasActiveSession()) {
+          const state = InsertionStateManager.getState();
+          if (state) {
+            const { position, completions, currentIndex } = state;
+            await editor.edit((editBuilder) => {
+              editBuilder.insert(position, completions[currentIndex]);
+            });
+            InsertionStateManager.clear();
+            vscode.window.showInformationMessage(
+              `补全已插入：${completions[currentIndex]}`,
+            );
+          } else {
+            vscode.window.showWarningMessage("当前没有可用的补全状态。");
+          }
+        }
+      },
+    ),
   );
-  context.subscriptions.push(documentChangeListener);
 }
 
 // This method is called when your extension is deactivated
