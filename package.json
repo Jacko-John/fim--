@@ -14,19 +14,9 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "fim--.acceptCompletionWithTab",
-        "title": "接受补全建议（Tab）"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "fim--.acceptCompletionWithTab",
-        "key": "tab",
-        "when": "editorTextFocus"
-      }
-    ]
+    "inlineCompletions": {
+      "enabled": true
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
