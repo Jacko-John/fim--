@@ -1,4 +1,4 @@
-import { CodeContext } from "./shared/contex";
+import { CodeContext } from "./types/contex";
 
 export const CURSOR_HOLDER = "<$cursor$>";
 export const RAW_SNIPPET = "RAW_SNIPPET";
