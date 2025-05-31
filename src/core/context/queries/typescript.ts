@@ -21,4 +21,4 @@ export default `
       body: (_) @body
     ) @arrowFunc
   )
-`
+`;

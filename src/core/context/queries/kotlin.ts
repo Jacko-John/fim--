@@ -19,4 +19,4 @@ export default `
 
 (typealias_declaration
   name: (simple_identifier) @name.definition.typealias) @definition.typealias
-)`
+)`;
