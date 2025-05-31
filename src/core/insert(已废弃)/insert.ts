@@ -18,7 +18,7 @@ export async function insertCode(
   const decorationType = vscode.window.createTextEditorDecorationType({
     after: {
       contentText: completions[0],
-      color: "rgba(150, 150, 150, 0.8)",
+      color: "rgba(150,150,150,0.5)",
     },
   });
 
@@ -38,7 +38,8 @@ function updateCurrentDecoration() {
     return;
   }
 
-  const { editor, position, decorationType } = state;
+  const { editor, position, decorationType, completions } = state;
+  // const InlineCompletionItem = new vscode.InlineCompletionItem(completions[0]);
 
   editor.setDecorations(decorationType, [
     {

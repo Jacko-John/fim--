@@ -1,16 +1,17 @@
 import * as vscode from "vscode";
-import { CodeContext } from "../../shared/contex";
+import { CodeContext } from "../../types/contex";
+import { parseFile } from "./codeCST";
+import { get } from "axios";
 
-export function getCodeContext(editor: vscode.TextEditor): CodeContext {
+export function getCodeContext(
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  offset: number = 5,
+): CodeContext {
+  // return new Promise<CodeContext>(() => {
+  // console.log("getCodeContext");
   let ctx: CodeContext = new CodeContext();
-  if (!editor) {
-    return ctx;
-  }
-  const document = editor.document;
-  const position = editor.selection.active;
 
-  // 定义上下文范围（光标前后各 5 行）
-  const offset = 5;
   const prefixL = Math.max(0, position.line - offset);
   const suffixL = Math.min(document.lineCount, position.line + offset);
 
@@ -29,6 +30,8 @@ export function getCodeContext(editor: vscode.TextEditor): CodeContext {
     },
   ).join("\n");
 
+  // console.log("complete");
+
   ctx.prefix = prefixLines;
   ctx.suffix = suffixLines;
   ctx.prefixOnCursor = document
@@ -41,5 +44,7 @@ export function getCodeContext(editor: vscode.TextEditor): CodeContext {
     suffixLines;
   ctx.cursor = { line: position.line, col: position.character };
 
+  parseFile(vscode.window.activeTextEditor!);
   return ctx;
+  // });
 }

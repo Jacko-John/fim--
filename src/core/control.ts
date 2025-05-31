@@ -1,11 +1,16 @@
 import { Cache, DefaultCacheOption, DefaultCacheType } from "./cache/cache";
 import * as vscode from "vscode";
 import { getCodeContext } from "./context/codeContext";
-import { CURSOR_HOLDER, DEFAULT_CONTEXT, RAW_SNIPPET } from "../globalConst";
+import { DEFAULT_CONTEXT, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
-import { insertCode } from "./insert/insert";
-import { CodeContext } from "../shared/contex";
+import { CodeContext } from "../types/contex";
 import { checkFilter } from "./cache/filter";
+import {
+  InlineCompletionItem,
+  InlineCompletionList,
+  ProviderResult,
+} from "vscode";
+import { StatusManager } from "./status/StatusManager";
 
 interface AnyFunc {
   (): void;
@@ -25,11 +30,11 @@ class ControllSession {
   /** 补全结果 -- 包含当前行
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
-  completions: string[] = ["SYSU SSE"];
-  /** 编辑器实例 */
-  editor: vscode.TextEditor;
-  constructor(editor: vscode.TextEditor) {
-    this.editor = editor;
+  completions: string[] = [`\nprint("hello world")`];
+  config: any;
+
+  constructor(config: any) {
+    this.config = config;
   }
 
   /**
@@ -40,8 +45,9 @@ class ControllSession {
    *
    * @returns 应返回当前上下文对象，用于链式调用
    */
-  getCtx(): ControllSession {
-    this.ctx = getCodeContext(this.editor);
+  getCtx(document: vscode.TextDocument, position: vscode.Position) {
+    // console.log("in getCtx");
+    this.ctx = getCodeContext(document, position, undefined);
     return this;
   }
 
@@ -55,6 +61,7 @@ class ControllSession {
    */
   getCST(): ControllSession {
     // this.cst = getCodeCST(this.editor);
+    // console.log("in getCST");
     return this;
   }
 
@@ -64,6 +71,7 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   checkConfig(): ControllSession {
+    // console.log("in checkConfig");
     return this;
   }
 
@@ -78,6 +86,7 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   checkCache(hasher: Hasher, cache: Cache<DefaultCacheType>): ControllSession {
+    // console.log("in checkCache");
     if (this.cancel) {
       return this;
     }
@@ -104,61 +113,64 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   requestApi(): ControllSession {
+    // console.log("in requestApi");
     if (this.completionIndex !== -1) {
       return this;
     }
     return this;
   }
-
-  /**
-   * 显示结果
-   *
-   * 此函数用于展示控制会话中的结果，它接收一个ControllSession实例作为参数，
-   * 通过这个实例可以访问会话中的各种数据，从而进行结果的显示
-   *
-   * @returns 应返回当前上下文对象，用于链式调用
-   */
-  showResult(): ControllSession {
-    insertCode(this.editor, this.completions);
-    return this;
-  }
-
   then(func: AnyFunc) {
     func();
     return this;
   }
 }
 
-export class FIMController {
+export class FIMProvider implements vscode.InlineCompletionItemProvider {
   cache: Cache<DefaultCacheType>;
   hasher: Hasher;
   config: any;
+  debounceTimer: number = 0;
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
   }
-
-  /**
-   * 按下tab键补全
-   *
-   * @param session 控制会话的实例，包含会话所需的各种数据
-   */
-  async hookTab(session: ControllSession) {}
-
-  run(editor: vscode.TextEditor) {
-    const session = new ControllSession(editor);
+  public async provideInlineCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    context: vscode.InlineCompletionContext,
+    token: vscode.CancellationToken,
+    //@ts-ignore
+  ): ProviderResult<InlineCompletionItem[] | InlineCompletionList> {
+    if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
+      console.log("Automatic trigger is banned");
+      return null;
+    }
+    if (!StatusManager.getStatus()) {
+      return;
+    }
+    const session = new ControllSession(this.config);
     session
-      .getCtx()
+      .getCtx(document, position)
       .getCST()
-      .then(() => {
-        // const fullCode =
-        //   session.ctx.prefixWithMid + CURSOR_HOLDER + session.ctx.suffixWithMid;
-        // console.log(fullCode);
-        console.log(session.ctx);
-      })
       .checkConfig()
       .checkCache(this.hasher, this.cache)
       .requestApi()
-      .showResult();
+      .then(() => {
+        // TODO: Check if the completion is valid
+        // console.log(session.ctx);
+        session.completionIndex = 0;
+      });
+    StatusManager.resetStatus();
+    if (session.cancel) {
+      return;
+    }
+    const completion = session.completions[session.completionIndex];
+    if (completion) {
+      const endPosition = document.positionAt(
+        document.offsetAt(position) + completion.length,
+      );
+      const range = new vscode.Range(position, endPosition);
+      return [new vscode.InlineCompletionItem(completion, range)];
+    }
   }
 }

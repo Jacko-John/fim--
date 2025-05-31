@@ -1,5 +1,5 @@
 import { LRUCache } from "lru-cache";
-import { CodeContext } from "../../shared/contex";
+import { CodeContext } from "../../types/contex";
 
 /**
  * 缓存类

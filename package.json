@@ -14,19 +14,63 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "fim--.acceptCompletionWithTab",
-        "title": "接受补全建议（Tab）"
+    "inlineCompletions": {
+      "enabled": true
+    },
+    "configuration": {
+      "type": "object",
+      "title": "FIM-- 配置 (修改后重启插件生效)",
+      "properties": {
+        "fim--.debounceTime": {
+          "type": "integer",
+          "default": 1000,
+          "description": "抖动时间，在输入结束 n 毫秒后触发智能补全"
+        },
+        "fim--.RLCoderEnable": {
+          "type": "boolean",
+          "description": "是否启用RLCoder，RLCoder 是一个强大的智能补全检索模型，可以检索类似的代码片段，可以提高智能补全准确率"
+        },
+        "fim--RLCoderURL": {
+          "type": "string",
+          "description": "RLCoder API地址"
+        },
+        "fim--.RLCoderKey": {
+          "type": "string",
+          "description": "RLCoder API密钥"
+        },
+        "fim--.APIs": {
+          "type": "array",
+          "description": "API配置，数组中每个对象包含Type, URL和Key",
+          "default": [
+            {
+              "Type": "OpenAI",
+              "URL": "https://api.openai.com/v1/chat/completions",
+              "Key": ""
+            }
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "Type": {
+                "type": "string",
+                "enum": [
+                  "OpenAI"
+                ],
+                "description": "API类型"
+              },
+              "URL": {
+                "type": "string",
+                "description": "API地址"
+              },
+              "Key": {
+                "type": "string",
+                "description": "API密钥"
+              }
+            }
+          }
+        }
       }
-    ],
-    "keybindings": [
-      {
-        "command": "fim--.acceptCompletionWithTab",
-        "key": "tab",
-        "when": "editorTextFocus"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -68,6 +112,6 @@
     "openai": "^4.95.1",
     "prettier": "^3.5.3",
     "tree-sitter-wasms": "^0.1.12",
-    "web-tree-sitter": "^0.21.0"
+    "web-tree-sitter": "^0.25.4"
   }
 }
