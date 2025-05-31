@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 import { CodeContext } from "../../types/contex";
+import { parseFile } from "./codeCST";
+import { get } from "axios";
 
 export function getCodeContext(
   document: vscode.TextDocument,
@@ -42,6 +44,7 @@ export function getCodeContext(
     suffixLines;
   ctx.cursor = { line: position.line, col: position.character };
 
+  parseFile(vscode.window.activeTextEditor!);
   return ctx;
   // });
 }
