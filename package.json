@@ -73,19 +73,20 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run package",
-    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "copy-wasm": "shx cp node_modules/web-tree-sitter/tree-sitter.wasm dist/"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -98,15 +99,19 @@
     "esbuild": "^0.25.1",
     "eslint": "^9.23.0",
     "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.2"
+    "shx": "^0.4.0",
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@babel/parser": "^7.27.0",
     "axios": "^1.8.4",
+    "copy-webpack-plugin": "^13.0.0",
     "lru-cache": "^11.1.0",
     "node-addon-loader": "^0.0.6",
     "openai": "^4.95.1",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "tree-sitter-wasms": "^0.1.12",
+    "web-tree-sitter": "^0.25.4"
   }
 }

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
+//import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "fim--" is now active!');
