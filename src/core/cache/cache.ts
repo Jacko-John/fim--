@@ -49,6 +49,10 @@ export class Cache<T extends {}> {
   clear() {
     return this.cache.clear();
   }
+
+  forEach(fn: (value: T, key: string) => void) {
+    this.cache.forEach(fn);
+  }
 }
 
 /**

@@ -15,6 +15,7 @@ import {
   swiftQuery,
   kotlinQuery,
 } from "./queries";
+import { fileDeclarations } from "../../shared/cst";
 const { Query } = require("web-tree-sitter");
 
 const { Parser } = require("web-tree-sitter");
@@ -126,8 +127,6 @@ export const supportedLanguages: { [key: string]: LanguageName } = {
   // kt: LanguageName.KOTLIN,
   // scala: LanguageName.SCALA,
 };
-
-export const fileDeclarations: { [key: string]: string[] } = {};
 
 let isParserInited = false;
 async function initParser() {
