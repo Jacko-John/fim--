@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
+import { ConfigManager } from "./config/ConfigManager";
 //import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -19,7 +20,23 @@ export function activate(context: vscode.ExtensionContext) {
     }, 1000);
   });
 
-  context.subscriptions.push(provider, onEditorChange);
+  const showMoreResults = vscode.commands.registerCommand(
+    "fim--.showMoreResults",
+    async () => {
+      let a = ConfigManager.getWebviewOpened();
+      console.log(a);
+      ConfigManager.setWebviewOpened(true);
+      a = ConfigManager.getWebviewOpened();
+      console.log(a);
+      setTimeout(() => {
+        ConfigManager.setWebviewOpened(false);
+        console.log(ConfigManager.getWebviewOpened());
+      }, 1000);
+      vscode.window.showInformationMessage("您执行了extension.sayHello命令！");
+    },
+  );
+
+  context.subscriptions.push(provider, onEditorChange, showMoreResults);
 }
 
 export function deactivate() {}
