@@ -17,3 +17,14 @@ export interface ControllSessionConfig {
   /** 是否开启多模型补全模式 */
   webviewOpened: boolean;
 }
+
+export interface CSTItem {
+  /** 标识符 */
+  name: string;
+  /** 所属路径 */
+  filePath: string;
+  /** 声明内容 */
+  signature: string;
+  /** Jaccard算法提取集合 */
+  tokens: Set<string>;
+}
