@@ -14,6 +14,19 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "fim--.showMoreResults",
+        "title": "Show More Results"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "fim--.showMoreResults",
+        "key": "ctrl+shift+m",
+        "when": "!fim--.webviewOpened"
+      }
+    ],
     "inlineCompletions": {
       "enabled": true
     },

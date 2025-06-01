@@ -15,6 +15,9 @@ export interface APIConfig {
 export class ConfigManager {
   private static config: vscode.WorkspaceConfiguration =
     vscode.workspace.getConfiguration();
+  private static stateMachine = {
+    webviewOpened: false,
+  };
   static getDebounceTime(): number {
     return ConfigManager.config.get<number>("fim--.debounceTime") || 1000;
   }
@@ -45,5 +48,14 @@ export class ConfigManager {
     let apis: APIConfig[] =
       ConfigManager.config.get<APIConfig[]>("fim--.apis") || [];
     return apis;
+  }
+
+  static getWebviewOpened(): boolean {
+    return ConfigManager.stateMachine.webviewOpened;
+  }
+
+  static setWebviewOpened(value: boolean): void {
+    vscode.commands.executeCommand("setContext", "fim--.webviewOpened", value);
+    ConfigManager.stateMachine.webviewOpened = value;
   }
 }
