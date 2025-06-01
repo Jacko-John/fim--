@@ -17,12 +17,12 @@ export function activate(context: vscode.ExtensionContext) {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
-    }, 1000);
+    }, ConfigManager.getDebounceTime());
   });
 
   const showMoreResults = vscode.commands.registerCommand(
     "fim--.showMoreResults",
-    async () => {
+    () => {
       let a = ConfigManager.getWebviewOpened();
       console.log(a);
       ConfigManager.setWebviewOpened(true);
