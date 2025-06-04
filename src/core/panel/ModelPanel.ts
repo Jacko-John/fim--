@@ -86,10 +86,10 @@ export class ModelPanel {
                 </style>
             </head>
             <body>
-                <h2>Model ${modelId} Completions</h2>
+                <h2> 可选补全结果 </h2>
                 ${completions.map((completion, index) => `
                     <div class="completion-item">
-                        <h3>Completion ${index + 1}</h3>
+                        <h3>${modelId} Completions: </h3>
                         <pre>${this.escapeHtml(completion)}</pre>
                     </div>
                 `).join('')}

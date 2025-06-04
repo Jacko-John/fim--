@@ -132,15 +132,7 @@ class ControllSession {
     }
 
     // 模拟多个模型的补全结果
-    this.updateModelCompletions('model1', [
-        'Completion from Model 1 - Option 1',
-        'Completion from Model 1 - Option 2'
-    ]);
-
-    this.updateModelCompletions('model2', [
-        'Completion from Model 2 - Option 1',
-        'Completion from Model 2 - Option 2'
-    ]);
+    this.updateModelCompletions('RLCoder', this.completions);
 
     return this;
   }
@@ -175,7 +167,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     }
     const session = new ControllSession();
     session
-      .getCtx(document, position)
+      // .getCtx(document, position)
       .getCST()
       .checkCache(this.hasher, this.cache)
       .requestApi()
