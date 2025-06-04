@@ -1,42 +1,49 @@
 import * as vscode from 'vscode';
+import { ConfigManager } from '../../config/ConfigManager';
 
 export class ModelPanel {
-    private static panels: Map<string, vscode.WebviewPanel> = new Map();
+    private static currentPanel: vscode.WebviewPanel | undefined;
     
     public static createOrShow(modelId: string, completions: string[]) {
-        const columnToShowIn = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn
-            : undefined;
-
-        if (this.panels.has(modelId)) {
-            this.panels.get(modelId)?.reveal(columnToShowIn);
+        if (this.currentPanel) {
             this.updateContent(modelId, completions);
             return;
         }
 
-        const panel = vscode.window.createWebviewPanel(
-            `model-${modelId}`,
-            `Model ${modelId} Completions`,
-            vscode.ViewColumn.Beside,
+        // 创建固定在最右侧的面板
+        this.currentPanel = vscode.window.createWebviewPanel(
+            'modelCompletions',
+            'AI Completions',
+            {
+                viewColumn: vscode.ViewColumn.Three,
+                preserveFocus: true
+            },
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
             }
         );
 
-        this.panels.set(modelId, panel);
         this.updateContent(modelId, completions);
 
-        panel.onDidDispose(() => {
-            this.panels.delete(modelId);
-        });
+        // 当面板被关闭时
+        this.currentPanel.onDidDispose(() => {
+            this.currentPanel = undefined;
+            ConfigManager.setWebviewOpened(false);
+        }, null);
+
+        ConfigManager.setWebviewOpened(true);
+    }
+
+    public static hide() {
+        if (this.currentPanel) {
+            this.currentPanel.dispose();
+        }
     }
 
     private static updateContent(modelId: string, completions: string[]) {
-        const panel = this.panels.get(modelId);
-        if (!panel) return;
-
-        panel.webview.html = this.getWebviewContent(modelId, completions);
+        if (!this.currentPanel) return;
+        this.currentPanel.webview.html = this.getWebviewContent(modelId, completions);
     }
 
     private static getWebviewContent(modelId: string, completions: string[]) {
@@ -45,7 +52,12 @@ export class ModelPanel {
             <html>
             <head>
                 <style>
-                    body { padding: 20px; }
+                    body { 
+                        padding: 20px;
+                        font-family: var(--vscode-font-family);
+                        color: var(--vscode-editor-foreground);
+                        background-color: var(--vscode-editor-background);
+                    }
                     .completion-item {
                         padding: 10px;
                         margin: 10px 0;
@@ -53,9 +65,23 @@ export class ModelPanel {
                         border: 1px solid var(--vscode-panel-border);
                         border-radius: 4px;
                     }
+                    .completion-item:hover {
+                        border-color: var(--vscode-focusBorder);
+                    }
                     pre {
                         white-space: pre-wrap;
                         word-wrap: break-word;
+                        background-color: var(--vscode-textBlockQuote-background);
+                        padding: 8px;
+                        border-radius: 4px;
+                    }
+                    h2 {
+                        color: var(--vscode-editor-foreground);
+                        border-bottom: 1px solid var(--vscode-panel-border);
+                        padding-bottom: 8px;
+                    }
+                    h3 {
+                        color: var(--vscode-textLink-foreground);
                     }
                 </style>
             </head>
@@ -79,10 +105,5 @@ export class ModelPanel {
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-    }
-
-    public static closeAll() {
-        this.panels.forEach(panel => panel.dispose());
-        this.panels.clear();
     }
 }

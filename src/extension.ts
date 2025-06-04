@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
 import { ConfigManager } from "./config/ConfigManager";
+import { ModelPanel } from "./core/panel/ModelPanel";
 //import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -16,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
   const onEditorChange = vscode.workspace.onDidChangeTextDocument(() => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
+      // 只触发内联补全，不自动显示 webview
       vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
     }, ConfigManager.getDebounceTime());
   });
@@ -23,20 +25,32 @@ export function activate(context: vscode.ExtensionContext) {
   const showMoreResults = vscode.commands.registerCommand(
     "fim--.showMoreResults",
     () => {
-      let a = ConfigManager.getWebviewOpened();
-      console.log(a);
-      ConfigManager.setWebviewOpened(true);
-      a = ConfigManager.getWebviewOpened();
-      console.log(a);
-      setTimeout(() => {
-        ConfigManager.setWebviewOpened(false);
-        console.log(ConfigManager.getWebviewOpened());
-      }, 1000);
-      vscode.window.showInformationMessage("您执行了extension.sayHello命令！");
+      const isOpened = ConfigManager.getWebviewOpened();
+      if (!isOpened) {
+        ModelPanel.createOrShow("current", ["请先触发代码补全..."]);
+      }
     },
   );
 
-  context.subscriptions.push(provider, onEditorChange, showMoreResults);
+  // 注册切换 webview 的命令
+  const toggleWebview = vscode.commands.registerCommand(
+    "fim--.toggleWebview",
+    () => {
+      const isOpened = ConfigManager.getWebviewOpened();
+      if (isOpened) {
+        ModelPanel.hide();
+      } else {
+        // 如果没有当前补全结果，显示一个欢迎信息
+        ModelPanel.createOrShow("welcome", [
+          "欢迎使用 AI Completions！",
+          "当您触发代码补全时，补全结果将会显示在这里。",
+          "您可以使用快捷键 Ctrl+Shift+A (Mac: Cmd+Shift+A) 或点击编辑器右上角的按钮来切换此面板。"
+        ]);
+      }
+    }
+  );
+
+  context.subscriptions.push(provider, onEditorChange, showMoreResults, toggleWebview);
 }
 
 export function deactivate() {}

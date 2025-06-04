@@ -18,13 +18,32 @@
       {
         "command": "fim--.showMoreResults",
         "title": "Show More Results"
+      },
+      {
+        "command": "fim--.toggleWebview",
+        "title": "Toggle AI Completions Panel",
+        "icon": "$(preview)"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "fim--.toggleWebview",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "fim--.showMoreResults",
-        "key": "ctrl+shift+m",
+        "key": "ctrl+shift+l",
         "when": "!fim--.webviewOpened"
+      },
+      {
+        "command": "fim--.toggleWebview",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
       }
     ],
     "inlineCompletions": {
@@ -83,13 +102,7 @@
           }
         }
       }
-    },
-    "commands": [
-      {
-        "command": "fim.closeAllPanels",
-        "title": "Close All Model Panels"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

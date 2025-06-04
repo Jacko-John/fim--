@@ -111,7 +111,10 @@ class ControllSession {
    */
   updateModelCompletions(modelId: string, completions: string[]) {
     this.modelCompletions.set(modelId, completions);
-    this.showModelCompletions(modelId);
+    // 只更新结果，不自动显示
+    if (ConfigManager.getWebviewOpened()) {
+      this.showModelCompletions(modelId);
+    }
   }
 
   /**
