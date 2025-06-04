@@ -5,6 +5,7 @@ import { DEFAULT_CONTEXT, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
 import { CodeContext } from "../types/contex";
 import { checkFilter } from "./cache/filter";
+import { ModelPanel } from "./panel/ModelPanel";
 import {
   InlineCompletionItem,
   InlineCompletionList,
@@ -32,6 +33,8 @@ class ControllSession {
    */
   completions: string[] = [`\nprint("hello world")`];
   config: any;
+  /** 存储不同模型的补全结果 */
+  modelCompletions: Map<string, string[]> = new Map();
 
   constructor(config: any) {
     this.config = config;
@@ -105,6 +108,27 @@ class ControllSession {
   }
 
   /**
+   * 显示模型补全结果
+   * @param modelId 模型标识符
+   */
+  showModelCompletions(modelId: string) {
+    const completions = this.modelCompletions.get(modelId);
+    if (completions) {
+      ModelPanel.createOrShow(modelId, completions);
+    }
+  }
+
+  /**
+   * 更新模型补全结果
+   * @param modelId 模型标识符
+   * @param completions 补全结果
+   */
+  updateModelCompletions(modelId: string, completions: string[]) {
+    this.modelCompletions.set(modelId, completions);
+    this.showModelCompletions(modelId);
+  }
+
+  /**
    * 请求API接口
    *
    * 本函数用于向API发起请求，请求的上下文信息通过参数session传递
@@ -117,6 +141,18 @@ class ControllSession {
     if (this.completionIndex !== -1) {
       return this;
     }
+
+    // 模拟多个模型的补全结果
+    this.updateModelCompletions('model1', [
+        'Completion from Model 1 - Option 1',
+        'Completion from Model 1 - Option 2'
+    ]);
+
+    this.updateModelCompletions('model2', [
+        'Completion from Model 2 - Option 1',
+        'Completion from Model 2 - Option 2'
+    ]);
+
     return this;
   }
   then(func: AnyFunc) {
@@ -165,6 +201,9 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       return;
     }
     const completion = session.completions[session.completionIndex];
+    
+    console.log(completion);
+
     if (completion) {
       const endPosition = document.positionAt(
         document.offsetAt(position) + completion.length,

@@ -70,7 +70,13 @@
           }
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "fim.closeAllPanels",
+        "title": "Close All Model Panels"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",

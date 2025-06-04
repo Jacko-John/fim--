@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
+import { ModelPanel } from './core/panel/ModelPanel';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "fim--" is now active!');
@@ -16,9 +17,15 @@ export function activate(context: vscode.ExtensionContext) {
     debounceTimer = setTimeout(() => {
       vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
     }, 1000);
-  });
+  }); 
 
   context.subscriptions.push(provider, onEditorChange);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('fim.closeAllPanels', () => {
+      ModelPanel.closeAll();
+    })
+  );
 }
 
 export function deactivate() {}
