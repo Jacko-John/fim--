@@ -225,10 +225,21 @@ const GET_SYMBOLS_FOR_NODE_TYPES: string[] = [
   "method_declaration", // method name = first "identifier" child
   "method_definition",
   "generator_function_declaration",
+  "declaration",
   // property_identifier
   // field_declaration
   //"arrow_function",
 ];
+
+function isFunctionType(node: any): boolean {
+  return (
+    node.type === "function_definition" ||
+    node.type === "function_declaration" ||
+    node.type === "method_definition" ||
+    node.type === "method_declaration" ||
+    node.type === "generator_function_declaration"
+  );
+}
 
 function findDeclarationName(root: any, fileContent: string): string[] {
   const declaration: string[] = [];
@@ -271,6 +282,14 @@ function findDeclarationName(root: any, fileContent: string): string[] {
       console.log(`Get declaration:\n${declarationText}`);
       declaration.push(declarationText);
       declarationText = "";
+    }
+
+    //如果当前栈顶的结点为函数结点，则无需继续处理函数体内部的信息
+    if (
+      parentStack.length !== 0 &&
+      isFunctionType(parentStack.at(parentStack.length - 1))
+    ) {
+      continue;
     }
 
     if (GET_SYMBOLS_FOR_NODE_TYPES.includes(node.type)) {
@@ -328,7 +347,7 @@ function traverseTreeRecursive(root: any) {
 
 function printNode(node: any) {
   console.log(`Node Type: ${node.type}`);
-  console.log(`Text: ${node.text}`);
+  console.log(node.text);
   console.log(
     `Range: [${node.startPosition.row},${node.startPosition.column}] - [${node.endPosition.row},${node.endPosition.column}]`,
   );
