@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { getCodeContext } from "./context/codeContext";
 import { DEFAULT_CONTEXT, RAW_SNIPPET } from "../globalConst";
 import { Hasher } from "./cache/hash";
-import { CodeContext } from "../types/contex";
+import { CodeContext, ControllSessionConfig } from "../types/context";
 import { checkFilter } from "./cache/filter";
 import { ModelPanel } from "./panel/ModelPanel";
 import {
@@ -12,6 +12,7 @@ import {
   ProviderResult,
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
+import { ConfigManager } from "../config/ConfigManager";
 
 interface AnyFunc {
   (): void;
@@ -32,13 +33,6 @@ class ControllSession {
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
   completions: string[] = [`\nprint("hello world")`];
-  config: any;
-  /** 存储不同模型的补全结果 */
-  modelCompletions: Map<string, string[]> = new Map();
-
-  constructor(config: any) {
-    this.config = config;
-  }
 
   /**
    * 获取上下文
@@ -65,16 +59,6 @@ class ControllSession {
   getCST(): ControllSession {
     // this.cst = getCodeCST(this.editor);
     // console.log("in getCST");
-    return this;
-  }
-
-  /**
-   * 此函数主要为会话对象附上配置信息
-   *
-   * @returns 应返回当前上下文对象，用于链式调用
-   */
-  checkConfig(): ControllSession {
-    // console.log("in checkConfig");
     return this;
   }
 
@@ -184,11 +168,10 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     if (!StatusManager.getStatus()) {
       return;
     }
-    const session = new ControllSession(this.config);
+    const session = new ControllSession();
     session
       .getCtx(document, position)
       .getCST()
-      .checkConfig()
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .then(() => {

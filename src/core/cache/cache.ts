@@ -1,5 +1,5 @@
 import { LRUCache } from "lru-cache";
-import { CodeContext } from "../../types/contex";
+import { CodeContext } from "../../types/context";
 
 /**
  * 缓存类
@@ -48,6 +48,10 @@ export class Cache<T extends {}> {
    */
   clear() {
     return this.cache.clear();
+  }
+
+  forEach(fn: (value: T, key: string) => void) {
+    this.cache.forEach(fn);
   }
 }
 
