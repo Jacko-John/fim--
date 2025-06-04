@@ -33,6 +33,8 @@ class ControllSession {
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
   completions: string[] = [`\nprint("hello world")`];
+  /** 存储不同模型的补全结果 */
+  modelCompletions: Map<string, string[]> = new Map();
 
   /**
    * 获取上下文
