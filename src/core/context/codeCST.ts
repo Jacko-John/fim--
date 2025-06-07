@@ -15,7 +15,8 @@ import {
   swiftQuery,
   kotlinQuery,
 } from "./queries";
-import { fileDeclarations } from "../../shared/cst";
+import { cstCache, CSTItems, fileDeclarations } from "../../shared/cst";
+import { CSTItem } from "../../types/context";
 const { Query } = require("web-tree-sitter");
 
 const { Parser } = require("web-tree-sitter");
@@ -196,16 +197,16 @@ export async function parseFile(editor: vscode.TextEditor) {
 
         // Parse the file content into an Abstract Syntax Tree (AST), a tree-like representation of the code
         const tree = parser.parse(fileContent);
-        //traverseTreeRecursive(tree.rootNode);
-        const declarations = findDeclarationName(tree.rootNode, fileContent);
-        if (declarations.length !== 0) {
-          fileDeclarations[
-            vscode.workspace.asRelativePath(editor.document.uri)
-          ] = new Array(...declarations);
-        }
         console.log("****Parase file success****");
-        console.log(fileDeclarations);
-        return;
+
+        /*test*/
+        //traverseTreeRecursive(tree.rootNode);
+
+        const declarations = getDeclarationNames(tree.rootNode, fileContent);
+        const filePath = vscode.workspace.asRelativePath(editor.document.uri);
+        if (declarations.size !== 0) {
+          addCSTItems(declarations, filePath);
+        }
       })
       .catch((e: any) => {
         console.log("load language error", e);
@@ -225,13 +226,28 @@ const GET_SYMBOLS_FOR_NODE_TYPES: string[] = [
   "method_declaration", // method name = first "identifier" child
   "method_definition",
   "generator_function_declaration",
+  "declaration",
   // property_identifier
   // field_declaration
   //"arrow_function",
 ];
 
-function findDeclarationName(root: any, fileContent: string): string[] {
-  const declaration: string[] = [];
+function isFunctionType(node: any): boolean {
+  return (
+    node.type === "function_definition" ||
+    node.type === "function_declaration" ||
+    node.type === "method_definition" ||
+    node.type === "method_declaration" ||
+    node.type === "generator_function_declaration"
+  );
+}
+
+function getDeclarationNames(
+  root: any,
+  fileContent: string,
+): Map<string, string> {
+  //key为identifier，value为declaration
+  const declaration: Map<string, string> = new Map();
 
   const stack = [root];
   //父结点栈，用于进行范围检查
@@ -247,10 +263,8 @@ function findDeclarationName(root: any, fileContent: string): string[] {
     node.children.forEach((child: any) => {
       stack.push(child);
     });
-    //flag避免无效输出
-    let flag = false;
+
     while (parentStack.length > 0) {
-      flag = true;
       //检查当前结点是否在父结点范围内
       const currentParent = parentStack.pop()!;
       if (
@@ -265,12 +279,22 @@ function findDeclarationName(root: any, fileContent: string): string[] {
       if (needEndSign.pop()) {
         declarationText += `${space}}\n`;
       }
+
+      if (parentStack.length === 0) {
+        // console.log("-----------------");
+        // console.log(`Get declaration:\n${declarationText}`);
+        const identifier = getNodeIdentifier(currentParent);
+        declaration.set(identifier, declarationText);
+        declarationText = "";
+      }
     }
-    if (flag && parentStack.length === 0) {
-      console.log("-----------------");
-      console.log(`Get declaration:\n${declarationText}`);
-      declaration.push(declarationText);
-      declarationText = "";
+
+    //如果当前栈顶的结点为函数结点，则无需继续处理函数体内部的信息
+    if (
+      parentStack.length !== 0 &&
+      isFunctionType(parentStack.at(parentStack.length - 1))
+    ) {
+      continue;
     }
 
     if (GET_SYMBOLS_FOR_NODE_TYPES.includes(node.type)) {
@@ -305,6 +329,37 @@ function findDeclarationName(root: any, fileContent: string): string[] {
   return declaration;
 }
 
+function getNodeIdentifier(node: any): string {
+  let idx: number = 0;
+  const queue = [node];
+  while (idx < queue.length) {
+    const n = queue[idx++];
+    if (n.type === "identifier" || n.type === "type_identifier") {
+      return n.text;
+    }
+    n.children.forEach((child: any) => {
+      queue.push(child);
+    });
+  }
+  return "";
+}
+
+function addCSTItems(declarations: Map<string, string>, filePath: string) {
+  const cstItems: CSTItem[] = [];
+  declarations.forEach((value: string, key: string) => {
+    let item: CSTItem = {
+      name: key,
+      filePath: filePath,
+      signature: value,
+      tokens: new Set<string>(),
+    };
+    cstItems.push(item);
+    console.log(item);
+  });
+  // 不进行额外判断，不管是开新文件写还是在已存在的文件中修改，只使用changed方法
+  cstCache.fileChanged(filePath, cstItems);
+}
+
 function traverseTreeRecursive(root: any) {
   const stack = [root];
 
@@ -317,8 +372,13 @@ function traverseTreeRecursive(root: any) {
     if (!node.isNamed) continue;
 
     // 处理当前命名节点
-    console.log("*****");
-    printNode(node);
+    // console.log("*****");
+    // printNode(node);
+
+    const identifier = getNodeIdentifier(node);
+    if (identifier !== "") {
+      console.log("Get current node identifier: ", identifier);
+    }
   }
   // console.log('*****');
   // printNode(root);
@@ -328,7 +388,7 @@ function traverseTreeRecursive(root: any) {
 
 function printNode(node: any) {
   console.log(`Node Type: ${node.type}`);
-  console.log(`Text: ${node.text}`);
+  console.log(node.text);
   console.log(
     `Range: [${node.startPosition.row},${node.startPosition.column}] - [${node.endPosition.row},${node.endPosition.column}]`,
   );
