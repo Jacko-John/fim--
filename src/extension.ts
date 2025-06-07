@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
 import { ConfigManager } from "./config/ConfigManager";
+import { cstCache, HISTORY } from "./shared/cst";
 //import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -20,6 +21,51 @@ export function activate(context: vscode.ExtensionContext) {
     }, ConfigManager.getDebounceTime());
   });
 
+  const onActiveEditorChanged = vscode.window.onDidChangeActiveTextEditor(
+    (editor) => {
+      if (editor) {
+        //console.log("用户切换到了文件:", vscode.workspace.asRelativePath(editor.document.uri));
+        HISTORY.addHistory(
+          vscode.workspace.asRelativePath(editor.document.uri),
+        );
+      }
+    },
+  );
+
+  const onWillDeleteFiles = vscode.workspace.onWillDeleteFiles(
+    async (event) => {
+      event.files.forEach(async (file) => {
+        try {
+          const stack = [file];
+          while (stack.length > 0) {
+            const currentFile = stack.pop();
+            if (!currentFile) continue;
+            const entries =
+              await vscode.workspace.fs.readDirectory(currentFile);
+            for (const [name, type] of entries) {
+              const subFilePath = vscode.Uri.joinPath(currentFile, name);
+              //console.log(`将要处理文件: ${vscode.workspace.asRelativePath(subFilePath)}`);
+              if (type === vscode.FileType.Directory) {
+                stack.push(subFilePath);
+              } else if (type === vscode.FileType.File) {
+                // 处理文件删除逻辑
+                //console.log(`将要删除文件: ${vscode.workspace.asRelativePath(subFilePath)}`);
+                cstCache.fileChanged(
+                  vscode.workspace.asRelativePath(subFilePath),
+                  [],
+                );
+              }
+            }
+          }
+        } catch (error) {
+          console.error(
+            `Get err when handle onWillDeleteFiles event: ${error}`,
+          );
+        }
+      });
+    },
+  );
+
   const showMoreResults = vscode.commands.registerCommand(
     "fim--.showMoreResults",
     () => {
@@ -36,7 +82,13 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  context.subscriptions.push(provider, onEditorChange, showMoreResults);
+  context.subscriptions.push(
+    provider,
+    onEditorChange,
+    onActiveEditorChanged,
+    onWillDeleteFiles,
+    showMoreResults,
+  );
 }
 
 export function deactivate() {}

@@ -12,6 +12,8 @@ import {
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
 import { ConfigManager } from "../config/ConfigManager";
+import { parseFile } from "./context/codeCST";
+import { cstCache, HISTORY } from "../shared/cst";
 
 interface AnyFunc {
   (): void;
@@ -56,8 +58,8 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   getCST(): ControllSession {
-    // this.cst = getCodeCST(this.editor);
-    // console.log("in getCST");
+    console.log("get cst");
+    parseFile(vscode.window.activeTextEditor!);
     return this;
   }
 
