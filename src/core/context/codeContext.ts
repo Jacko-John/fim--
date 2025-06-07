@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
-import { CodeContext } from "../../types/contex";
+import { CodeContext } from "../../types/context";
 import { parseFile } from "./codeCST";
 import { get } from "axios";
+import { DEFAULT_CONTEXT } from "../../globalConst";
 
 export function getCodeContext(
   document: vscode.TextDocument,
@@ -10,7 +11,7 @@ export function getCodeContext(
 ): CodeContext {
   // return new Promise<CodeContext>(() => {
   // console.log("getCodeContext");
-  let ctx: CodeContext = new CodeContext();
+  let ctx: CodeContext = DEFAULT_CONTEXT;
 
   const prefixL = Math.max(0, position.line - offset);
   const suffixL = Math.min(document.lineCount, position.line + offset);
