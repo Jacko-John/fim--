@@ -2,6 +2,8 @@ export class StatusManager {
   private static debounceTimer: number = 0;
   private static debounceInterval: number = 3000;
   private static stopFactor: number = 1;
+  private static decreamentTimer: number = 0;
+  private static decreamentInterval: number = 1000 * 60 * 2;
   private static enable: boolean = true;
   private static isStopped: boolean = false;
   private static acceptedItems: number = 0;
@@ -34,6 +36,7 @@ export class StatusManager {
 
   public static addTotalItem(): void {
     StatusManager.totalItems++;
+    StatusManager.checkWehtherToStop();
   }
 
   private static checkWehtherToStop() {
@@ -51,7 +54,14 @@ export class StatusManager {
       );
       StatusManager.stopFactor = Math.min(StatusManager.stopFactor + 1, 5);
     } else if (factor >= 0.5) {
-      StatusManager.stopFactor = Math.max(StatusManager.stopFactor - 1, 1);
+      const newTimer = new Date().getTime();
+      if (
+        StatusManager.decreamentTimer + StatusManager.decreamentInterval <=
+        newTimer
+      ) {
+        StatusManager.stopFactor = Math.max(StatusManager.stopFactor - 1, 1);
+        StatusManager.decreamentTimer = newTimer;
+      }
     }
   }
 }
