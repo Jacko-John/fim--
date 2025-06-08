@@ -57,9 +57,9 @@ class ControllSession {
    *
    * @returns 应返回当前上下文对象，用于链式调用
    */
-  getCST(): ControllSession {
+  getCST(document: vscode.TextDocument): ControllSession {
     console.log("get cst");
-    parseFile(vscode.window.activeTextEditor!);
+    parseFile(document);
     return this;
   }
 
@@ -139,7 +139,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     const session = new ControllSession();
     session
       .getCtx(document, position)
-      .getCST()
+      .getCST(document)
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .then(() => {

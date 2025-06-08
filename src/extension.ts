@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
 import { ConfigManager } from "./config/ConfigManager";
 import { cstCache, HISTORY } from "./shared/cst";
+import { patch } from "axios";
+import { parseFile } from "./core/context/codeCST";
 //import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -25,9 +27,14 @@ export function activate(context: vscode.ExtensionContext) {
     (editor) => {
       if (editor) {
         //console.log("用户切换到了文件:", vscode.workspace.asRelativePath(editor.document.uri));
-        HISTORY.addHistory(
-          vscode.workspace.asRelativePath(editor.document.uri),
-        );
+        /**
+         * 假设一个用户只能存在一个文件正在修改
+         * 当一个新的文件被打开，我们就需要解析这个文件的CST，并将其加入到历史记录中
+         * 当用户正在编辑当前文件，我们应该实时解析当前文件，这就保证了CST的实时性
+         */
+        const document = editor.document;
+        HISTORY.addHistory(vscode.workspace.asRelativePath(document.uri));
+        parseFile(document);
       }
     },
   );

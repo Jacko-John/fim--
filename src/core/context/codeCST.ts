@@ -178,12 +178,12 @@ function loadQuery(langName: LanguageName) {
   }
 }
 
-export async function parseFile(editor: vscode.TextEditor) {
-  if (!editor) return null;
+export async function parseFile(document: vscode.TextDocument) {
+  if (!document) return null;
   try {
     await initParser();
-    const fileName = editor.document.fileName;
-    const fileContent = editor.document.getText();
+    const fileName = document.fileName;
+    const fileContent = document.getText();
     if (!fileName.split(".").pop()) return null;
     const languageName =
       supportedLanguages[fileName.split(".").pop() as string];
@@ -203,7 +203,7 @@ export async function parseFile(editor: vscode.TextEditor) {
         //traverseTreeRecursive(tree.rootNode);
 
         const declarations = getDeclarationNames(tree.rootNode, fileContent);
-        const filePath = vscode.workspace.asRelativePath(editor.document.uri);
+        const filePath = vscode.workspace.asRelativePath(document.uri);
         if (declarations.size !== 0) {
           addCSTItems(declarations, filePath);
         }
