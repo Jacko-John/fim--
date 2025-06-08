@@ -116,8 +116,10 @@ class ControllSession {
 export class FIMProvider implements vscode.InlineCompletionItemProvider {
   cache: Cache<DefaultCacheType>;
   hasher: Hasher;
-  config: any;
-  debounceTimer: number = 0;
+  cmd: vscode.Command = {
+    command: "fim--.compeletionAccepted",
+    title: "CompletionAccepted",
+  };
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
@@ -153,11 +155,12 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     }
     const completion = session.completions[session.completionIndex];
     if (completion) {
+      StatusManager.addTotalItem();
       const endPosition = document.positionAt(
         document.offsetAt(position) + completion.length,
       );
       const range = new vscode.Range(position, endPosition);
-      return [new vscode.InlineCompletionItem(completion, range)];
+      return [new vscode.InlineCompletionItem(completion, range, this.cmd)];
     }
   }
 }
