@@ -50,10 +50,9 @@ export function activate(context: vscode.ExtensionContext) {
               } else if (type === vscode.FileType.File) {
                 // 处理文件删除逻辑
                 //console.log(`将要删除文件: ${vscode.workspace.asRelativePath(subFilePath)}`);
-                cstCache.fileChanged(
-                  vscode.workspace.asRelativePath(subFilePath),
-                  [],
-                );
+                const path = vscode.workspace.asRelativePath(subFilePath);
+                cstCache.fileChanged(path, []);
+                HISTORY.deleteHistory(path);
               }
             }
           }
