@@ -4,6 +4,7 @@ import { ConfigManager } from "./config/ConfigManager";
 import { cstCache, HISTORY } from "./shared/cst";
 import { patch } from "axios";
 import { parseFile } from "./core/context/codeCST";
+import { StatusManager } from "./core/status/StatusManager";
 //import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -72,6 +73,13 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  const onCompeletionAccepted = vscode.commands.registerCommand(
+    "fim--.compeletionAccepted",
+    () => {
+      StatusManager.addAcceptedItem();
+    },
+  );
+
   const showMoreResults = vscode.commands.registerCommand(
     "fim--.showMoreResults",
     () => {
@@ -94,6 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
     onActiveEditorChanged,
     onWillDeleteFiles,
     showMoreResults,
+    onCompeletionAccepted,
   );
 }
 
