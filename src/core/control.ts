@@ -32,7 +32,7 @@ class ControllSession {
   /** 补全结果 -- 包含当前行
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
-  completions: string[] = [`\nprint("hello world")`];
+  completions: string[] = [`\nprint("000000000")`, `\nprint("111111111")`, `\nprint("222222222")`];
   /** 存储不同模型的补全结果 */
   modelCompletions: Map<string, string[]> = new Map();
 
