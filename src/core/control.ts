@@ -13,13 +13,11 @@ import {
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
 import { ConfigManager } from "../config/ConfigManager";
-import { parseFile } from "./context/codeCST";
-import { cstCache, HISTORY } from "../shared/cst";
 
 interface AnyFunc {
   (): void;
 }
-
+ 
 class ControllSession {
   /** 代码上下文 */
   ctx: CodeContext = DEFAULT_CONTEXT;
@@ -60,9 +58,9 @@ class ControllSession {
    *
    * @returns 应返回当前上下文对象，用于链式调用
    */
-  getCST(document: vscode.TextDocument): ControllSession {
-    console.log("get cst");
-    parseFile(document);
+  getCST(): ControllSession {
+    // this.cst = getCodeCST(this.editor);
+    // console.log("in getCST");
     return this;
   }
 
@@ -147,10 +145,8 @@ class ControllSession {
 export class FIMProvider implements vscode.InlineCompletionItemProvider {
   cache: Cache<DefaultCacheType>;
   hasher: Hasher;
-  cmd: vscode.Command = {
-    command: "fim--.compeletionAccepted",
-    title: "CompletionAccepted",
-  };
+  config: any;
+  debounceTimer: number = 0;
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
@@ -171,8 +167,8 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     }
     const session = new ControllSession();
     session
-      .getCtx(document, position)
-      .getCST(document)
+      // .getCtx(document, position)
+      .getCST()
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .then(() => {
@@ -189,12 +185,11 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     console.log(completion);
 
     if (completion) {
-      StatusManager.addTotalItem();
       const endPosition = document.positionAt(
         document.offsetAt(position) + completion.length,
       );
       const range = new vscode.Range(position, endPosition);
-      return [new vscode.InlineCompletionItem(completion, range, this.cmd)];
+      return [new vscode.InlineCompletionItem(completion, range)];
     }
   }
 }
