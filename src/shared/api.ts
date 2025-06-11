@@ -1,3 +1,5 @@
+import { languages } from "vscode";
+
 export interface ApiHandlerOptions {
   deepSeekApiKey?: string;
   RLCoderApiKey?: string;
@@ -36,3 +38,9 @@ export const deepseekModels: Record<string, ModelConfig> = {
 export const rlCoderModels = {
   rlcoder: {},
 };
+
+export interface RLCoderResItem {
+  code_content: string;
+  file_path: string;
+  languages: string;
+}

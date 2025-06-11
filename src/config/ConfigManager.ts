@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 export interface RLCoderConfig {
   enabled: boolean;
+  is_bm25: boolean;
   url: string;
   key: string;
 }
@@ -29,6 +30,8 @@ export class ConfigManager {
     const rlcoderConf: RLCoderConfig = {
       enabled:
         ConfigManager.config.get<boolean>("fim--.RLCoderEnable") || false,
+      is_bm25:
+        ConfigManager.config.get<boolean>("fim--.RLCoderIsBM25") || false,
       url: ConfigManager.config.get<string>("fim--.RLCoderURL") || "",
       key: ConfigManager.config.get<string>("fim--.RLCoderKey") || "",
     };
@@ -46,7 +49,7 @@ export class ConfigManager {
 
   static getAPIs(): APIConfig[] {
     let apis: APIConfig[] =
-      ConfigManager.config.get<APIConfig[]>("fim--.apis") || [];
+      ConfigManager.config.get<APIConfig[]>("fim--.APIs") || [];
     return apis;
   }
 

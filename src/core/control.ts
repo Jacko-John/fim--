@@ -14,6 +14,7 @@ import { StatusManager } from "./status/StatusManager";
 import { ConfigManager } from "../config/ConfigManager";
 import { parseFile } from "./context/codeCST";
 import { cstCache, HISTORY } from "../shared/cst";
+import { getCompletions } from "./request/requestApi";
 
 interface AnyFunc {
   (): void;
@@ -105,8 +106,15 @@ class ControllSession {
     if (this.completionIndex !== -1) {
       return this;
     }
+    let RLCoderConfig = ConfigManager.getRLCoderConfig();
+    let apis = ConfigManager.getAPIs();
+    console.log("RLCoderConfig:", RLCoderConfig);
+    console.log("APIs:", apis);
+
+    this.completions = getCompletions(apis, RLCoderConfig, this.ctx);
     return this;
   }
+
   then(func: AnyFunc) {
     func();
     return this;
@@ -146,7 +154,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .requestApi()
       .then(() => {
         // TODO: Check if the completion is valid
-        // console.log(session.ctx);
+        console.log(session.ctx);
         session.completionIndex = 0;
       });
     StatusManager.resetStatus();
