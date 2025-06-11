@@ -3,8 +3,11 @@ import { ConfigManager } from '../../config/ConfigManager';
 
 export class ModelPanel {
     private static currentPanel: vscode.WebviewPanel | undefined;
+    private static onCompletionSelected: ((index: number) => void) | undefined;
     
-    public static createOrShow(modelId: string, completions: string[]) {
+    public static createOrShow(modelId: string, completions: string[], onSelect?: (index: number) => void) {
+        this.onCompletionSelected = onSelect;
+        
         if (this.currentPanel) {
             this.updateContent(modelId, completions);
             return;
@@ -21,6 +24,19 @@ export class ModelPanel {
             {
                 enableScripts: true,
                 retainContextWhenHidden: true,
+            }
+        );
+
+        // 处理来自webview的消息
+        this.currentPanel.webview.onDidReceiveMessage(
+            message => {
+                switch (message.command) {
+                    case 'selectCompletion':
+                        if (this.onCompletionSelected) {
+                            this.onCompletionSelected(message.index);
+                        }
+                        return;
+                }
             }
         );
 
@@ -64,6 +80,7 @@ export class ModelPanel {
                         background-color: var(--vscode-editor-background);
                         border: 1px solid var(--vscode-panel-border);
                         border-radius: 4px;
+                        cursor: pointer;
                     }
                     .completion-item:hover {
                         border-color: var(--vscode-focusBorder);
@@ -84,11 +101,21 @@ export class ModelPanel {
                         color: var(--vscode-textLink-foreground);
                     }
                 </style>
+                <script>
+                    const vscode = acquireVsCodeApi();
+                    
+                    function selectCompletion(index) {
+                        vscode.postMessage({
+                            command: 'selectCompletion',
+                            index: index
+                        });
+                    }
+                </script>
             </head>
             <body>
                 <h2> 可选补全结果 </h2>
                 ${completions.map((completion, index) => `
-                    <div class="completion-item">
+                    <div class="completion-item" onclick="selectCompletion(${index})">
                         <h3>${modelId} Completions: </h3>
                         <pre>${this.escapeHtml(completion)}</pre>
                     </div>

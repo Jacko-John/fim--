@@ -100,7 +100,11 @@ class ControllSession {
   showModelCompletions(modelId: string) {
     const completions = this.modelCompletions.get(modelId);
     if (completions) {
-      ModelPanel.createOrShow(modelId, completions);
+      ModelPanel.createOrShow(modelId, completions, (index: number) => {
+        this.completionIndex = index; // 选择Index
+        // 可以在这里添加其他需要的处理逻辑
+        console.log(`Selected completion index: ${this.completionIndex}`);
+      });
     }
   }
 
@@ -174,7 +178,8 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .then(() => {
         // TODO: Check if the completion is valid
         // console.log(session.ctx);
-        session.completionIndex = 0;
+        console.log(`Get completion index: ${session.completionIndex}`);
+        session.completionIndex = 1;
       });
     StatusManager.resetStatus();
     if (session.cancel) {
