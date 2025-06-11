@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { CodeContext } from "../../types/context";
-// import { parseFile } from "./codeCST";
+import { get } from "axios";
 import { DEFAULT_CONTEXT } from "../../globalConst";
 
 export function getCodeContext(

@@ -1,22 +1,23 @@
-// import path from "path";
-// import * as vscode from "vscode";
-// import {
-//   javascriptQuery,
-//   typescriptQuery,
-//   pythonQuery,
-//   rustQuery,
-//   goQuery,
-//   cppQuery,
-//   cQuery,
-//   csharpQuery,
-//   rubyQuery,
-//   javaQuery,
-//   phpQuery,
-//   swiftQuery,
-//   kotlinQuery,
-// } from "./queries";
-// import { fileDeclarations } from "../../shared/cst";
-// const { Query } = require("web-tree-sitter");
+import path from "path";
+import * as vscode from "vscode";
+import {
+  javascriptQuery,
+  typescriptQuery,
+  pythonQuery,
+  rustQuery,
+  goQuery,
+  cppQuery,
+  cQuery,
+  csharpQuery,
+  rubyQuery,
+  javaQuery,
+  phpQuery,
+  swiftQuery,
+  kotlinQuery,
+} from "./queries";
+import { cstCache, CSTItems, fileDeclarations } from "../../shared/cst";
+import { CSTItem } from "../../types/context";
+const { Query } = require("web-tree-sitter");
 
 // const { Parser } = require("web-tree-sitter");
 

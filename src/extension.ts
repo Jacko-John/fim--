@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
 import { ConfigManager } from "./config/ConfigManager";
+import { StatusManager } from "./core/status/StatusManager";
 import { ModelPanel } from "./core/panel/ModelPanel";
 //import { getParserForFile } from "./core/context/codeCST";
 
@@ -21,6 +22,62 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
     }, ConfigManager.getDebounceTime());
   });
+
+  const onActiveEditorChanged = vscode.window.onDidChangeActiveTextEditor(
+    (editor) => {
+      if (editor) {
+        //console.log("用户切换到了文件:", vscode.workspace.asRelativePath(editor.document.uri));
+        /**
+         * 假设一个用户只能存在一个文件正在修改
+         * 当一个新的文件被打开，我们就需要解析这个文件的CST，并将其加入到历史记录中
+         * 当用户正在编辑当前文件，我们应该实时解析当前文件，这就保证了CST的实时性
+         */
+        const document = editor.document;
+        // HISTORY.addHistory(vscode.workspace.asRelativePath(document.uri));
+        // parseFile(document);
+      }
+    },
+  );
+
+  const onWillDeleteFiles = vscode.workspace.onWillDeleteFiles(
+    async (event) => {
+      event.files.forEach(async (file) => {
+        try {
+          const stack = [file];
+          while (stack.length > 0) {
+            const currentFile = stack.pop();
+            if (!currentFile) continue;
+            const entries =
+              await vscode.workspace.fs.readDirectory(currentFile);
+            for (const [name, type] of entries) {
+              const subFilePath = vscode.Uri.joinPath(currentFile, name);
+              //console.log(`将要处理文件: ${vscode.workspace.asRelativePath(subFilePath)}`);
+              if (type === vscode.FileType.Directory) {
+                stack.push(subFilePath);
+              } else if (type === vscode.FileType.File) {
+                // 处理文件删除逻辑
+                //console.log(`将要删除文件: ${vscode.workspace.asRelativePath(subFilePath)}`);
+                const path = vscode.workspace.asRelativePath(subFilePath);
+                // cstCache.fileChanged(path, []);
+                // HISTORY.deleteHistory(path);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(
+            `Get err when handle onWillDeleteFiles event: ${error}`,
+          );
+        }
+      });
+    },
+  );
+
+  const onCompeletionAccepted = vscode.commands.registerCommand(
+    "fim--.compeletionAccepted",
+    () => {
+      StatusManager.addAcceptedItem();
+    },
+  );
 
   const showMoreResults = vscode.commands.registerCommand(
     "fim--.showMoreResults",
@@ -50,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(provider, onEditorChange, showMoreResults, toggleWebview);
+  context.subscriptions.push(provider, onEditorChange, showMoreResults);
 }
 
 export function deactivate() {}

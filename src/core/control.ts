@@ -13,6 +13,8 @@ import {
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
 import { ConfigManager } from "../config/ConfigManager";
+import { parseFile } from "./context/codeCST";
+import { cstCache, HISTORY } from "../shared/cst";
 
 interface AnyFunc {
   (): void;
@@ -58,9 +60,9 @@ class ControllSession {
    *
    * @returns 应返回当前上下文对象，用于链式调用
    */
-  getCST(): ControllSession {
-    // this.cst = getCodeCST(this.editor);
-    // console.log("in getCST");
+  getCST(document: vscode.TextDocument): ControllSession {
+    console.log("get cst");
+    parseFile(document);
     return this;
   }
 
@@ -145,8 +147,10 @@ class ControllSession {
 export class FIMProvider implements vscode.InlineCompletionItemProvider {
   cache: Cache<DefaultCacheType>;
   hasher: Hasher;
-  config: any;
-  debounceTimer: number = 0;
+  cmd: vscode.Command = {
+    command: "fim--.compeletionAccepted",
+    title: "CompletionAccepted",
+  };
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
@@ -167,8 +171,8 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     }
     const session = new ControllSession();
     session
-      // .getCtx(document, position)
-      .getCST()
+      .getCtx(document, position)
+      .getCST(document)
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .then(() => {
@@ -185,11 +189,12 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     console.log(completion);
 
     if (completion) {
+      StatusManager.addTotalItem();
       const endPosition = document.positionAt(
         document.offsetAt(position) + completion.length,
       );
       const range = new vscode.Range(position, endPosition);
-      return [new vscode.InlineCompletionItem(completion, range)];
+      return [new vscode.InlineCompletionItem(completion, range, this.cmd)];
     }
   }
 }
