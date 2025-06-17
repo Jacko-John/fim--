@@ -50,7 +50,23 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(provider, onEditorChange, showMoreResults, toggleWebview);
+  // 注册选择上一个补全项的命令
+  const selectPreviousCompletion = vscode.commands.registerCommand(
+    "fim--.selectPreviousCompletion",
+    () => {
+      ModelPanel.selectPreviousCompletion();
+    }
+  );
+
+  // 注册选择下一个补全项的命令
+  const selectNextCompletion = vscode.commands.registerCommand(
+    "fim--.selectNextCompletion",
+    () => {
+      ModelPanel.selectNextCompletion();
+    }
+  );
+
+  context.subscriptions.push(provider, onEditorChange, showMoreResults, toggleWebview, selectPreviousCompletion, selectNextCompletion);
 }
 
 export function deactivate() {}

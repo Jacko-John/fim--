@@ -13,11 +13,12 @@ import {
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
 import { ConfigManager } from "../config/ConfigManager";
+import { Comp,AB } from "./panel/completion";
 
 interface AnyFunc {
   (): void;
 }
- 
+
 class ControllSession {
   /** 代码上下文 */
   ctx: CodeContext = DEFAULT_CONTEXT;
@@ -32,7 +33,11 @@ class ControllSession {
   /** 补全结果 -- 包含当前行
    * @example completions[completionIndex] = prefixOnCursor + completion
    */
-  completions: string[] = [`\nprint("000000000")`, `\nprint("111111111")`, `\nprint("222222222")`];
+  completions: string[] = [
+    `\nprint("000000000")`,
+    `\nprint("111111111")`,
+    `\nprint("222222222")`,
+  ];
   /** 存储不同模型的补全结果 */
   modelCompletions: Map<string, string[]> = new Map();
 
@@ -101,9 +106,11 @@ class ControllSession {
     const completions = this.modelCompletions.get(modelId);
     if (completions) {
       ModelPanel.createOrShow(modelId, completions, (index: number) => {
-        this.completionIndex = index; // 选择Index
+        Comp.Index = index; // 更新全局Index
         // 可以在这里添加其他需要的处理逻辑
-        console.log(`Selected completion index: ${this.completionIndex}`);
+        StatusManager.isHaveRequiredApi = true;
+        console.log(`Selected completion index: ${Comp.Index}`);
+        vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
       });
     }
   }
@@ -136,7 +143,7 @@ class ControllSession {
     }
 
     // 模拟多个模型的补全结果
-    this.updateModelCompletions('RLCoder', this.completions);
+    this.updateModelCompletions("RLCoder", this.completions);
 
     return this;
   }
@@ -151,24 +158,44 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
   hasher: Hasher;
   config: any;
   debounceTimer: number = 0;
+
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
   }
+
   public async provideInlineCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
     context: vscode.InlineCompletionContext,
-    token: vscode.CancellationToken,
+    token: vscode.CancellationToken
     //@ts-ignore
   ): ProviderResult<InlineCompletionItem[] | InlineCompletionList> {
     if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
       console.log("Automatic trigger is banned");
       return null;
     }
+
+    console.log("1123");
+
+    if (StatusManager.isHaveRequiredApi === true) {
+      const completion = Comp.comps[Comp.Index];
+      console.log(completion);
+      Comp.Index = -1;
+
+      const endPosition = document.positionAt(
+        document.offsetAt(position) + completion.length
+      );
+
+      const range = new vscode.Range(position, endPosition);
+
+      return [new vscode.InlineCompletionItem(completion, range)];
+    }
+
     if (!StatusManager.getStatus()) {
       return;
     }
+
     const session = new ControllSession();
     session
       // .getCtx(document, position)
@@ -176,22 +203,22 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .then(() => {
-        // TODO: Check if the completion is valid
-        // console.log(session.ctx);
-        console.log(`Get completion index: ${session.completionIndex}`);
+        StatusManager.isHaveRequiredApi = true;
+        console.log(`Get completion index: ${Comp.Index}`);
         session.completionIndex = 1;
       });
     StatusManager.resetStatus();
     if (session.cancel) {
       return;
     }
+
     const completion = session.completions[session.completionIndex];
-    
+    Comp.Index = -1;
     console.log(completion);
 
     if (completion) {
       const endPosition = document.positionAt(
-        document.offsetAt(position) + completion.length,
+        document.offsetAt(position) + completion.length
       );
       const range = new vscode.Range(position, endPosition);
       return [new vscode.InlineCompletionItem(completion, range)];

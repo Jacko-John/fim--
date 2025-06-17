@@ -23,6 +23,14 @@
         "command": "fim--.toggleWebview",
         "title": "Toggle AI Completions Panel",
         "icon": "$(preview)"
+      },
+      {
+        "command": "fim--.selectPreviousCompletion",
+        "title": "Select Previous Completion"
+      },
+      {
+        "command": "fim--.selectNextCompletion",
+        "title": "Select Next Completion"
       }
     ],
     "menus": {
@@ -44,6 +52,18 @@
         "command": "fim--.toggleWebview",
         "key": "ctrl+shift+a",
         "mac": "cmd+shift+a"
+      },
+      {
+        "command": "fim--.selectPreviousCompletion",
+        "key": "ctrl+up",
+        "mac": "cmd+up",
+        "when": "editorTextFocus && fim--.webviewOpened"
+      },
+      {
+        "command": "fim--.selectNextCompletion",
+        "key": "ctrl+down",
+        "mac": "cmd+down",
+        "when": "editorTextFocus && fim--.webviewOpened"
       }
     ],
     "inlineCompletions": {

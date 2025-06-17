@@ -2,6 +2,8 @@ export class StatusManager {
   private static debounceTimer: number = 0;
   private static debounceInterval: number = 3000;
   private static enable: boolean = true;
+  public static isHaveRequiredApi: boolean = false;
+
   public static getStatus(): boolean {
     const newTimer = new Date().getTime();
     if (
