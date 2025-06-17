@@ -13,7 +13,7 @@ import {
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
 import { ConfigManager } from "../config/ConfigManager";
-import { Comp,AB } from "./panel/completion";
+import { Comp } from "./panel/completion";
 
 interface AnyFunc {
   (): void;
@@ -171,31 +171,32 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     token: vscode.CancellationToken
     //@ts-ignore
   ): ProviderResult<InlineCompletionItem[] | InlineCompletionList> {
+    console.log("进入补全方法...");
+
     if (context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic) {
       console.log("Automatic trigger is banned");
       return null;
     }
 
-    console.log("1123");
+    // if (StatusManager.isHaveRequiredApi === true) {
+    //   const completion = Comp.comps[Comp.Index];
+    //   console.log(completion);
+    //   Comp.Index = -1;
 
-    if (StatusManager.isHaveRequiredApi === true) {
-      const completion = Comp.comps[Comp.Index];
-      console.log(completion);
-      Comp.Index = -1;
+    //   const endPosition = document.positionAt(
+    //     document.offsetAt(position) + completion.length
+    //   );
 
-      const endPosition = document.positionAt(
-        document.offsetAt(position) + completion.length
-      );
+    //   const range = new vscode.Range(position, endPosition);
 
-      const range = new vscode.Range(position, endPosition);
-
-      return [new vscode.InlineCompletionItem(completion, range)];
-    }
+    //   return [new vscode.InlineCompletionItem(completion, range)];
+    // }
 
     if (!StatusManager.getStatus()) {
       return;
     }
 
+    console.log("执行CST、缓存、API请求...");
     const session = new ControllSession();
     session
       // .getCtx(document, position)
@@ -204,7 +205,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .requestApi()
       .then(() => {
         StatusManager.isHaveRequiredApi = true;
-        console.log(`Get completion index: ${Comp.Index}`);
+        console.log(`得到补全结果索引: ${Comp.Index}`);
         session.completionIndex = Comp.Index;
       });
     StatusManager.resetStatus();
@@ -213,14 +214,15 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     }
 
     const completion = session.completions[session.completionIndex];
-    Comp.Index = -1;
-    console.log(completion);
+    // Comp.Index = -1;
+    console.log("得到补全结果：" + completion);
 
     if (completion) {
       const endPosition = document.positionAt(
         document.offsetAt(position) + completion.length
       );
       const range = new vscode.Range(position, endPosition);
+      console.log("准备补全...");
       return [new vscode.InlineCompletionItem(completion, range)];
     }
   }
