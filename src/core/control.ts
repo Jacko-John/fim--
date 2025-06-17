@@ -222,7 +222,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
         document.offsetAt(position) + completion.length
       );
       const range = new vscode.Range(position, endPosition);
-      console.log("准备补全...");
+      console.log("准备补全..." + "\n");
       return [new vscode.InlineCompletionItem(completion, range)];
     }
   }
