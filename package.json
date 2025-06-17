@@ -75,6 +75,10 @@
                 "type": "string",
                 "description": "API地址"
               },
+              "Model": {
+                "type": "string",
+                "description": "API模型"
+              },
               "Key": {
                 "type": "string",
                 "description": "API密钥"
