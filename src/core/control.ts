@@ -205,7 +205,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .then(() => {
         StatusManager.isHaveRequiredApi = true;
         console.log(`Get completion index: ${Comp.Index}`);
-        session.completionIndex = 1;
+        session.completionIndex = Comp.Index;
       });
     StatusManager.resetStatus();
     if (session.cancel) {
