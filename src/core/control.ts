@@ -100,13 +100,20 @@ class ControllSession {
    *
    * @returns 应返回当前上下文对象，用于链式调用
    */
-  requestApi(): ControllSession {
-    // console.log("in requestApi");
-    if (this.completionIndex !== -1) {
-      return this;
-    }
-    return this;
-  }
+  // requestApi(): ControllSession {
+  //     // console.log("in requestApi");
+  //     if (this.completionIndex !== -1) {
+  //         return this;
+  //     }
+  //     let RLCoderConfig = ConfigManager.getRLCoderConfig();
+  //     let apis = ConfigManager.getAPIs();
+  //     console.log("RLCoderConfig:", RLCoderConfig);
+  //     console.log("APIs:", apis);
+
+  //     this.completions = getCompletions(apis, RLCoderConfig, this.ctx);
+  //     return this;
+  // }
+
   then(func: AnyFunc) {
     func();
     return this;
@@ -143,12 +150,20 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .getCtx(document, position)
       .getCST(document)
       .checkCache(this.hasher, this.cache)
-      .requestApi()
+      // .requestApi()
       .then(() => {
         // TODO: Check if the completion is valid
-        // console.log(session.ctx);
+        console.log(session.ctx);
         session.completionIndex = 0;
       });
+
+    let apis = ConfigManager.getAPIs();
+    let RLCoderConfig = ConfigManager.getRLCoderConfig();
+    let ctx = session.ctx;
+    // let res = await getCompletions(apis, RLCoderConfig, ctx);
+    session.completions = ["111111"];
+    console.log("Completions:", session.completions);
+
     StatusManager.resetStatus();
     if (session.cancel) {
       return;
