@@ -14,6 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   let debounceTimer: NodeJS.Timeout;
+
   const onEditorChange = vscode.workspace.onDidChangeTextDocument(() => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
@@ -69,4 +70,4 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(provider, onEditorChange, showMoreResults, toggleWebview, selectPreviousCompletion, selectNextCompletion);
 }
 
-export function deactivate() {}
+export function deactivate() { }

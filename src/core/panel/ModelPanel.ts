@@ -42,7 +42,7 @@ export class ModelPanel {
             Comp.Index = message.index; // 更新全局Index
             // 可以在这里添加其他需要的处理逻辑
             StatusManager.isHaveRequiredApi = true;
-            console.log(`Selected completion index: ${Comp.Index}`);
+            console.log(`Selected completion index1: ${Comp.Index}`);
             vscode.commands.executeCommand(
               "editor.action.inlineSuggest.trigger"
             );
