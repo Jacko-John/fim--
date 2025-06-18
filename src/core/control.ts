@@ -99,32 +99,26 @@ class ControllSession {
   }
 
   /**
-   * 显示模型补全结果
-   * @param modelId 模型标识符
-   */
-  showModelCompletions(modelId: string) {
-    const completions = this.modelCompletions.get(modelId);
-    if (completions) {
-      ModelPanel.createOrShow(modelId, completions, (index: number) => {
-        Comp.Index = index; // 更新全局Index
-        // 可以在这里添加其他需要的处理逻辑
-        StatusManager.isHaveRequiredApi = true;
-        console.log(`Selected completion index2: ${Comp.Index}`);
-        vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
-      });
-    }
-  }
-
-  /**
    * 更新模型补全结果
    * @param modelId 模型标识符
    * @param completions 补全结果
    */
   updateModelCompletions(modelId: string, completions: string[]) {
+    console.log("更新模型补全结果...");
+    
     this.modelCompletions.set(modelId, completions);
     // 只更新结果，不自动显示
     if (ConfigManager.getWebviewOpened()) {
-      this.showModelCompletions(modelId);
+      const completions = this.modelCompletions.get(modelId);
+      if (completions) {
+        ModelPanel.createOrShow(modelId, completions, (index: number) => {
+          Comp.Index = index; // 更新全局Index
+          // 可以在这里添加其他需要的处理逻辑
+          StatusManager.isHaveRequiredApi = true;
+          console.log(`Selected completion index2: ${Comp.Index}`);
+          vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
+        });
+      }
     }
   }
 
@@ -205,7 +199,6 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .checkCache(this.hasher, this.cache)
       .requestApi()
       .then(() => {
-        StatusManager.isHaveRequiredApi = true;
         console.log(`得到补全结果索引: ${Comp.Index}`);
         session.completionIndex = Comp.Index;
       });

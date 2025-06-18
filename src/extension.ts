@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { FIMProvider } from "./core/control";
 import { ConfigManager } from "./config/ConfigManager";
 import { ModelPanel } from "./core/panel/ModelPanel";
+import { Comp } from "./core/panel/completion";
 //import { getParserForFile } from "./core/context/codeCST";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -10,7 +11,12 @@ export function activate(context: vscode.ExtensionContext) {
   const fimProvider = new FIMProvider();
   const provider = vscode.languages.registerInlineCompletionItemProvider(
     { pattern: "**" }, // 所有文件类型都支持
-    fimProvider,
+    {
+      provideInlineCompletionItems: async (document, position) => {
+        return Comp.comps.map(comp => new vscode.InlineCompletionItem(comp, new vscode.Range(position, position)));
+      }
+    },
+    // fimProvider,
   );
 
   let debounceTimer: NodeJS.Timeout;
@@ -19,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       // 只触发内联补全，不自动显示 webview
+      console.log("显示内联补全");
       vscode.commands.executeCommand("editor.action.inlineSuggest.trigger");
     }, ConfigManager.getDebounceTime());
   });
