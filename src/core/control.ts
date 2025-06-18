@@ -105,7 +105,7 @@ class ControllSession {
    */
   updateModelCompletions(modelId: string, completions: string[]) {
     console.log("更新模型补全结果...");
-    
+
     this.modelCompletions.set(modelId, completions);
     // 只更新结果，不自动显示
     if (ConfigManager.getWebviewOpened()) {
@@ -130,17 +130,23 @@ class ControllSession {
    *
    * @returns 应返回当前上下文对象，用于链式调用
    */
-  requestApi(): ControllSession {
-    // console.log("in requestApi");
-    if (this.completionIndex !== -1) {
-      return this;
-    }
+  // requestApi(): ControllSession {
+  //     // console.log("in requestApi");
+  //     if (this.completionIndex !== -1) {
+  //         return this;
+  //     }
+  //     let RLCoderConfig = ConfigManager.getRLCoderConfig();
+  //     let apis = ConfigManager.getAPIs();
+  //     console.log("RLCoderConfig:", RLCoderConfig);
+  //     console.log("APIs:", apis);
 
-    // 模拟多个模型的补全结果
-    this.updateModelCompletions("RLCoder", this.completions);
+  //     this.completions = getCompletions(apis, RLCoderConfig, this.ctx);
+  //     return this;
+  // }
 
-    return this;
-  }
+  // 模拟多个模型的补全结果
+  // this.updateModelCompletions("RLCoder", this.completions);
+
   then(func: AnyFunc) {
     func();
     return this;
@@ -197,11 +203,19 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       // .getCtx(document, position)
       .getCST()
       .checkCache(this.hasher, this.cache)
-      .requestApi()
+      // .requestApi()
       .then(() => {
         console.log(`得到补全结果索引: ${Comp.Index}`);
         session.completionIndex = Comp.Index;
       });
+
+    let apis = ConfigManager.getAPIs();
+    let RLCoderConfig = ConfigManager.getRLCoderConfig();
+    let ctx = session.ctx;
+    // let res = await getCompletions(apis, RLCoderConfig, ctx);
+    session.completions = ["111111"];
+    console.log("Completions:", session.completions);
+
     StatusManager.resetStatus();
     if (session.cancel) {
       return;

@@ -9,6 +9,7 @@ export interface RLCoderConfig {
 export interface APIConfig {
   Type: string;
   Url: string;
+  Model: string;
   Key: string;
 }
 
@@ -46,7 +47,7 @@ export class ConfigManager {
 
   static getAPIs(): APIConfig[] {
     let apis: APIConfig[] =
-      ConfigManager.config.get<APIConfig[]>("fim--.apis") || [];
+      ConfigManager.config.get<APIConfig[]>("fim--.APIs") || [];
     return apis;
   }
 

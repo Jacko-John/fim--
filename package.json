@@ -82,7 +82,7 @@
           "type": "boolean",
           "description": "是否启用RLCoder，RLCoder 是一个强大的智能补全检索模型，可以检索类似的代码片段，可以提高智能补全准确率"
         },
-        "fim--RLCoderURL": {
+        "fim--.RLCoderURL": {
           "type": "string",
           "description": "RLCoder API地址"
         },
@@ -113,6 +113,10 @@
               "URL": {
                 "type": "string",
                 "description": "API地址"
+              },
+              "Model": {
+                "type": "string",
+                "description": "API模型"
               },
               "Key": {
                 "type": "string",
