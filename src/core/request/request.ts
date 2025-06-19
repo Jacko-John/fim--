@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import * as vscode from "vscode";
 import { APIConfig, RLCoderConfig } from "../../config/ConfigManager";
 import { Models, RLCoderResItem } from "../../shared/apis";
 import { HISTORY } from "../../shared/cst";
@@ -20,6 +20,7 @@ export class RequestApi {
     // 检查是否有配置的API
     if (!this.apis || this.apis.length === 0) {
       console.error("No APIs configured for request.");
+      vscode.window.showErrorMessage("No APIs configured for request.");
       return [];
     }
     // 获取RLCoder的内容

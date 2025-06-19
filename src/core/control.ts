@@ -85,14 +85,17 @@ class ControllSession {
     }
     this.hashKey = hasher.hashSnippet(this.ctx.prefix + this.ctx.suffix);
     const cacheData = cache.get(this.hashKey);
+    this.completionIndex = -1;
     if (cacheData && cacheData?.completions.length > 0) {
       this.completions = cacheData.completions;
       this.completionIndex = checkFilter(
         this.ctx.prefixOnCursor,
         this.completions,
       );
-    } else {
-      this.completionIndex = -1;
+      // 如果已经存在三个补全，且未命中缓存，则取消
+      if (cacheData.completions.length > 3 && this.completionIndex === -1) {
+        this.cancel = true;
+      }
     }
     return this;
   }
@@ -103,21 +106,47 @@ class ControllSession {
    * 本函数用于向API发起请求，请求的上下文信息通过参数session传递
    * 主要作用是根据当前会话状态，执行相应的API请求逻辑
    *
-   * @returns 应返回当前上下文对象，用于链式调用
    */
-  // requestApi(): ControllSession {
-  //     // console.log("in requestApi");
-  //     if (this.completionIndex !== -1) {
-  //         return this;
-  //     }
-  //     let RLCoderConfig = ConfigManager.getRLCoderConfig();
-  //     let apis = ConfigManager.getAPIs();
-  //     console.log("RLCoderConfig:", RLCoderConfig);
-  //     console.log("APIs:", apis);
+  async requestApi(
+    hasher: Hasher,
+    cache: Cache<DefaultCacheType>,
+    requestApi: RequestApi,
+  ) {
+    // 已有结果 or 被取消，则返回
+    if (this.completionIndex !== -1 || this.cancel) {
+      return;
+    }
+    let res = await requestApi.request(
+      this.ctx,
+      ConfigManager.getWebviewOpened(),
+    );
 
-  //     this.completions = getCompletions(apis, RLCoderConfig, this.ctx);
-  //     return this;
-  // }
+    if (res && res.length > 0) {
+      this.completions = res
+        .filter((r) => {
+          if (!r.data) {
+            vscode.window.showInformationMessage(
+              r.api,
+              "发生了一个错误，请查看日志获取详细信息",
+            );
+          }
+          return r.data;
+        })
+        .map((r) => r.data);
+      this.hashKey = hasher.hashSnippet(this.ctx.prefix + this.ctx.suffix);
+      const cacheData = cache.get(this.hashKey);
+      if (cacheData && cacheData?.completions.length > 0) {
+        cacheData.completions.push(...this.completions);
+      } else {
+        const newCache: DefaultCacheType = {
+          contextHash: this.hashKey,
+          completions: this.completions,
+          context: this.ctx,
+        };
+        cache.set(this.hashKey, newCache);
+      }
+    }
+  }
 
   then(func: AnyFunc) {
     func();
@@ -159,17 +188,7 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     session
       .getCtx(document, position)
       .getCST(document)
-      .checkCache(this.hasher, this.cache)
-      // .requestApi()
-      .then(() => {
-        // TODO: Check if the completion is valid
-        console.log(session.ctx);
-        session.completionIndex = 0;
-      });
-
-    // let res = await getCompletions(apis, RLCoderConfig, ctx);
-    session.completions = ["111111"];
-    console.log("Completions:", session.completions);
+      .checkCache(this.hasher, this.cache);
 
     StatusManager.resetStatus();
     if (session.cancel) {
