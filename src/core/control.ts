@@ -11,9 +11,14 @@ import {
   ProviderResult,
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
-import { ConfigManager } from "../config/ConfigManager";
+import {
+  APIConfig,
+  ConfigManager,
+  RLCoderConfig,
+} from "../config/ConfigManager";
 import { parseFile } from "./context/codeCST";
 import { cstCache, HISTORY } from "../shared/cst";
+import { RequestApi } from "./request/request";
 
 interface AnyFunc {
   (): void;
@@ -58,7 +63,7 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   getCST(document: vscode.TextDocument): ControllSession {
-    console.log("get cst");
+    // console.log("get cst");
     parseFile(document);
     return this;
   }
@@ -80,14 +85,21 @@ class ControllSession {
     }
     this.hashKey = hasher.hashSnippet(this.ctx.prefix + this.ctx.suffix);
     const cacheData = cache.get(this.hashKey);
+    this.completionIndex = -1;
     if (cacheData && cacheData?.completions.length > 0) {
-      this.completions = cacheData.completions;
-      this.completionIndex = checkFilter(
-        this.ctx.prefixOnCursor,
-        this.completions,
-      );
-    } else {
-      this.completionIndex = -1;
+      const completionsTmp = cacheData.completions;
+      const index = checkFilter(this.ctx.prefixOnCursor, completionsTmp);
+      // 如果已经存在三个补全，且未命中缓存，则取消
+      if (completionsTmp.length > 3 && index === -1) {
+        this.completions = [];
+        this.cancel = true;
+      } else {
+        // 若命中，则返回删去前缀的单个补全 (为什么要删除前缀请看requestApi函数)
+        this.completions = [
+          completionsTmp[index].slice(this.ctx.prefixOnCursor.length),
+        ];
+        this.completionIndex = 0;
+      }
     }
     return this;
   }
@@ -98,21 +110,59 @@ class ControllSession {
    * 本函数用于向API发起请求，请求的上下文信息通过参数session传递
    * 主要作用是根据当前会话状态，执行相应的API请求逻辑
    *
-   * @returns 应返回当前上下文对象，用于链式调用
    */
-  // requestApi(): ControllSession {
-  //     // console.log("in requestApi");
-  //     if (this.completionIndex !== -1) {
-  //         return this;
-  //     }
-  //     let RLCoderConfig = ConfigManager.getRLCoderConfig();
-  //     let apis = ConfigManager.getAPIs();
-  //     console.log("RLCoderConfig:", RLCoderConfig);
-  //     console.log("APIs:", apis);
+  async requestApi(
+    hasher: Hasher,
+    cache: Cache<DefaultCacheType>,
+    requestApi: RequestApi,
+  ) {
+    // 已有结果 or 被取消，则返回
+    if (this.completionIndex !== -1 || this.cancel) {
+      return;
+    }
+    let res = await requestApi.request(
+      this.ctx,
+      ConfigManager.getWebviewOpened(),
+    );
 
-  //     this.completions = getCompletions(apis, RLCoderConfig, this.ctx);
-  //     return this;
-  // }
+    if (res && res.length > 0) {
+      // 过滤掉无效的结果，获得补全
+      this.completions = res
+        .filter((r) => {
+          if (!r.data) {
+            vscode.window.showInformationMessage(
+              r.api,
+              "发生了一个错误，请查看日志获取详细信息",
+            );
+          }
+          return r.data;
+        })
+        .map((r) => r.data);
+      // 如果没有结果，则取消补全
+      if (this.completions.length === 0) {
+        this.cancel = true;
+        return;
+      }
+      this.completionIndex = 0;
+      // 缓存结果
+      this.hashKey = hasher.hashSnippet(this.ctx.prefix + this.ctx.suffix);
+      const cacheData = cache.get(this.hashKey);
+      // 为了方便后续计算缓存是否命中，添加当前行的前缀
+      const completionsTmp = this.completions.map(
+        (c) => this.ctx.prefixOnCursor + c,
+      );
+      if (cacheData && cacheData?.completions.length > 0) {
+        cacheData.completions.push(...completionsTmp);
+      } else {
+        const newCache: DefaultCacheType = {
+          contextHash: this.hashKey,
+          completions: completionsTmp,
+          context: this.ctx,
+        };
+        cache.set(this.hashKey, newCache);
+      }
+    }
+  }
 
   then(func: AnyFunc) {
     func();
@@ -127,9 +177,14 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     command: "fim--.compeletionAccepted",
     title: "CompletionAccepted",
   };
+  requestApi: RequestApi;
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
+    this.requestApi = new RequestApi(
+      ConfigManager.getAPIs(),
+      ConfigManager.getRLCoderConfig(),
+    );
   }
   public async provideInlineCompletionItems(
     document: vscode.TextDocument,
@@ -145,24 +200,13 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     if (!StatusManager.getStatus()) {
       return;
     }
+
     const session = new ControllSession();
     session
       .getCtx(document, position)
       .getCST(document)
-      .checkCache(this.hasher, this.cache)
-      // .requestApi()
-      .then(() => {
-        // TODO: Check if the completion is valid
-        console.log(session.ctx);
-        session.completionIndex = 0;
-      });
-
-    let apis = ConfigManager.getAPIs();
-    let RLCoderConfig = ConfigManager.getRLCoderConfig();
-    let ctx = session.ctx;
-    // let res = await getCompletions(apis, RLCoderConfig, ctx);
-    session.completions = ["111111"];
-    console.log("Completions:", session.completions);
+      .checkCache(this.hasher, this.cache);
+    await session.requestApi(this.hasher, this.cache, this.requestApi);
 
     StatusManager.resetStatus();
     if (session.cancel) {

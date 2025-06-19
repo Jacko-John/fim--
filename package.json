@@ -95,11 +95,11 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "compile": "npm run check-types && npm run lint && node esbuild.js && npm run copy-wasm && npm run copy-lang-wasm",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production && npm run copy-wasm && npm run copy-lang-wasm",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
@@ -107,7 +107,8 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "format": "prettier . --write",
-    "copy-wasm": "shx cp node_modules/web-tree-sitter/tree-sitter.wasm dist/"
+    "copy-wasm": "shx cp node_modules/web-tree-sitter/tree-sitter.wasm dist/",
+    "copy-lang-wasm": "shx cp -r node_modules/tree-sitter-wasms/out dist/"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

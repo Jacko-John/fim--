@@ -186,7 +186,10 @@ export async function parseFile(document: vscode.TextDocument) {
     const fileContent = document.getText();
     if (!fileName.split(".").pop()) return null;
     const languageName =
-      supportedLanguages[fileName.split(".").pop() as string];
+      supportedLanguages[fileName.split(".").pop() as string] || undefined;
+    if (!languageName) {
+      return;
+    }
     let language = loadLanguage(languageName);
     language
       .then((lang: any) => {

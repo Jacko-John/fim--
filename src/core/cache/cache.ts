@@ -64,7 +64,7 @@ export type CacheOption = {
 };
 
 export const DefaultCacheOption: CacheOption = {
-  max: 500,
+  max: 100,
   maxAge: 1000 * 60 * 60 * 24, // 24小时
 };
 
