@@ -114,6 +114,7 @@ class ControllSession {
   async requestApi(
     hasher: Hasher,
     cache: Cache<DefaultCacheType>,
+    document: vscode.TextDocument,
     requestApi: RequestApi,
   ) {
     // 已有结果 or 被取消，则返回
@@ -122,6 +123,7 @@ class ControllSession {
     }
     let res = await requestApi.request(
       this.ctx,
+      document,
       ConfigManager.getWebviewOpened(),
     );
 
@@ -206,7 +208,12 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
       .getCtx(document, position)
       .getCST(document)
       .checkCache(this.hasher, this.cache);
-    await session.requestApi(this.hasher, this.cache, this.requestApi);
+    await session.requestApi(
+      this.hasher,
+      this.cache,
+      document,
+      this.requestApi,
+    );
 
     StatusManager.resetStatus();
     if (session.cancel) {

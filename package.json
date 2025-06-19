@@ -57,6 +57,7 @@
           "default": [
             {
               "Type": "OpenAI",
+              "Model": "ChatGPT-4",
               "URL": "https://api.openai.com/v1/chat/completions",
               "Key": ""
             }
@@ -67,7 +68,10 @@
               "Type": {
                 "type": "string",
                 "enum": [
-                  "OpenAI"
+                  "OpenAI",
+                  "Qwen",
+                  "DeepSeek",
+                  "THUDM"
                 ],
                 "description": "API类型"
               },
