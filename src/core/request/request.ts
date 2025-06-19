@@ -10,22 +10,13 @@ import { CodeContext } from "../../types/context";
 export class RequestApi {
   private apis: APIConfig[];
   private rlCoderConfig: RLCoderConfig | null;
-  private ctx: CodeContext;
-  private multiModel: boolean;
 
-  constructor(
-    _apis: APIConfig[],
-    _rlCoderConfig: RLCoderConfig | null,
-    _ctx: CodeContext,
-    _multiModel: boolean,
-  ) {
+  constructor(_apis: APIConfig[], _rlCoderConfig: RLCoderConfig | null) {
     this.apis = _apis;
     this.rlCoderConfig = _rlCoderConfig;
-    this.ctx = _ctx;
-    this.multiModel = _multiModel;
   }
 
-  async request() {
+  async request(ctx: CodeContext, multiModel: boolean) {
     // 检查是否有配置的API
     if (!this.apis || this.apis.length === 0) {
       console.error("No APIs configured for request.");
@@ -39,7 +30,7 @@ export class RequestApi {
         rlSuggestions = await requestRLCoder(
           this.rlCoderConfig.url,
           this.rlCoderConfig.key,
-          this.ctx.prefixWithMid,
+          ctx.prefixWithMid,
         );
       } catch (error) {
         console.error("Error requesting RLCoder:", error);
@@ -50,7 +41,7 @@ export class RequestApi {
 
     // 构建提示词
     let prompt: string = getPrompt(
-      this.ctx.prefixOnCursor,
+      ctx.prefixOnCursor,
       rlSuggestions,
       functionList,
     );
@@ -66,7 +57,7 @@ export class RequestApi {
     let results: any[] = [];
 
     // 多模型处理
-    if (this.multiModel) {
+    if (multiModel) {
       // 选取api
       const apisToRequest = this.apis
         .filter((api) => api.Url && api.Model && api.Type && api.Key)
