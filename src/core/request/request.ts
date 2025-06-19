@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
 import { APIConfig, RLCoderConfig } from "../../config/ConfigManager";
 import { Models, RLCoderResItem } from "../../shared/apis";
-import { HISTORY } from "../../shared/cst";
+import { cstCache, HISTORY } from "../../shared/cst";
 import { getPrompt } from "../../shared/propmt";
 import { requestRLCoder } from "./rlcoder";
 import axios from "axios";
-import { CodeContext } from "../../types/context";
+import { CodeContext, CSTItem } from "../../types/context";
 
 export class RequestApi {
   private apis: APIConfig[];
@@ -16,7 +16,11 @@ export class RequestApi {
     this.rlCoderConfig = _rlCoderConfig;
   }
 
-  async request(ctx: CodeContext, multiModel: boolean) {
+  async request(
+    ctx: CodeContext,
+    document: vscode.TextDocument,
+    multiModel: boolean,
+  ) {
     // 检查是否有配置的API
     if (!this.apis || this.apis.length === 0) {
       console.error("No APIs configured for request.");
@@ -38,7 +42,16 @@ export class RequestApi {
       }
     }
     // 获取存在函数列表
-    let functionList: string[] = HISTORY.getHistory();
+    let CSTItem: CSTItem[] = cstCache.selectRelevantDeclarations(
+      vscode.workspace.asRelativePath(document.uri),
+      ctx.prefixWithMid,
+      HISTORY.getHistory(),
+      1000,
+    );
+
+    let functionList: string[] = CSTItem.map((item) => {
+      return item.signature;
+    });
 
     // 构建提示词
     let prompt: string = getPrompt(
@@ -86,9 +99,8 @@ export class RequestApi {
       });
 
       results = await Promise.all(promises);
-
-      // 单模型处理
     } else {
+      // 单模型处理
       // 选取api
       const apiToRequest = this.apis.find(
         (api) => api.Url && api.Model && api.Type && api.Key,
