@@ -63,7 +63,7 @@ class ControllSession {
    * @returns 应返回当前上下文对象，用于链式调用
    */
   getCST(document: vscode.TextDocument): ControllSession {
-    console.log("get cst");
+    // console.log("get cst");
     parseFile(document);
     return this;
   }
@@ -87,14 +87,18 @@ class ControllSession {
     const cacheData = cache.get(this.hashKey);
     this.completionIndex = -1;
     if (cacheData && cacheData?.completions.length > 0) {
-      this.completions = cacheData.completions;
-      this.completionIndex = checkFilter(
-        this.ctx.prefixOnCursor,
-        this.completions,
-      );
+      const completionsTmp = cacheData.completions;
+      const index = checkFilter(this.ctx.prefixOnCursor, completionsTmp);
       // 如果已经存在三个补全，且未命中缓存，则取消
-      if (cacheData.completions.length > 3 && this.completionIndex === -1) {
+      if (completionsTmp.length > 3 && index === -1) {
+        this.completions = [];
         this.cancel = true;
+      } else {
+        // 若命中，则返回删去前缀的单个补全 (为什么要删除前缀请看requestApi函数)
+        this.completions = [
+          completionsTmp[index].slice(this.ctx.prefixOnCursor.length),
+        ];
+        this.completionIndex = 0;
       }
     }
     return this;
@@ -122,6 +126,7 @@ class ControllSession {
     );
 
     if (res && res.length > 0) {
+      // 过滤掉无效的结果，获得补全
       this.completions = res
         .filter((r) => {
           if (!r.data) {
@@ -133,14 +138,25 @@ class ControllSession {
           return r.data;
         })
         .map((r) => r.data);
+      // 如果没有结果，则取消补全
+      if (this.completions.length === 0) {
+        this.cancel = true;
+        return;
+      }
+      this.completionIndex = 0;
+      // 缓存结果
       this.hashKey = hasher.hashSnippet(this.ctx.prefix + this.ctx.suffix);
       const cacheData = cache.get(this.hashKey);
+      // 为了方便后续计算缓存是否命中，添加当前行的前缀
+      const completionsTmp = this.completions.map(
+        (c) => this.ctx.prefixOnCursor + c,
+      );
       if (cacheData && cacheData?.completions.length > 0) {
-        cacheData.completions.push(...this.completions);
+        cacheData.completions.push(...completionsTmp);
       } else {
         const newCache: DefaultCacheType = {
           contextHash: this.hashKey,
-          completions: this.completions,
+          completions: completionsTmp,
           context: this.ctx,
         };
         cache.set(this.hashKey, newCache);
@@ -184,11 +200,13 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     if (!StatusManager.getStatus()) {
       return;
     }
+
     const session = new ControllSession();
     session
       .getCtx(document, position)
       .getCST(document)
       .checkCache(this.hasher, this.cache);
+    await session.requestApi(this.hasher, this.cache, this.requestApi);
 
     StatusManager.resetStatus();
     if (session.cancel) {
