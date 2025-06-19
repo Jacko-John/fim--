@@ -11,9 +11,14 @@ import {
   ProviderResult,
 } from "vscode";
 import { StatusManager } from "./status/StatusManager";
-import { ConfigManager } from "../config/ConfigManager";
+import {
+  APIConfig,
+  ConfigManager,
+  RLCoderConfig,
+} from "../config/ConfigManager";
 import { parseFile } from "./context/codeCST";
 import { cstCache, HISTORY } from "../shared/cst";
+import { RequestApi } from "./request/request";
 
 interface AnyFunc {
   (): void;
@@ -127,9 +132,14 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
     command: "fim--.compeletionAccepted",
     title: "CompletionAccepted",
   };
+  requestApi: RequestApi;
   constructor() {
     this.cache = new Cache(DefaultCacheOption);
     this.hasher = new Hasher(RAW_SNIPPET);
+    this.requestApi = new RequestApi(
+      ConfigManager.getAPIs(),
+      ConfigManager.getRLCoderConfig(),
+    );
   }
   public async provideInlineCompletionItems(
     document: vscode.TextDocument,
@@ -157,9 +167,6 @@ export class FIMProvider implements vscode.InlineCompletionItemProvider {
         session.completionIndex = 0;
       });
 
-    let apis = ConfigManager.getAPIs();
-    let RLCoderConfig = ConfigManager.getRLCoderConfig();
-    let ctx = session.ctx;
     // let res = await getCompletions(apis, RLCoderConfig, ctx);
     session.completions = ["111111"];
     console.log("Completions:", session.completions);
