@@ -4,7 +4,7 @@ import { CodeContext } from "../../types/context";
 /**
  * 缓存类
  * @example
- * const cache = new Cache<DefaultCacheType>({ max: 500 });
+ * const cache = new Cache<DefaultCacheType>({ max: 100 });
  */
 export class Cache<T extends {}> {
   cache: LRUCache<string, T>;

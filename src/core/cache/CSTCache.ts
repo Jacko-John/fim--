@@ -13,15 +13,17 @@ export class CSTCache {
     historySequence: string[], // 文件打开历史序列（最近访问在前）
     maxLength: number, // 最大总长度（字符数）
   ): CSTItem[] {
+    // 获取当前文件声明
     const Declarations = this.pathMap.get(currentFile) || [];
-
+    // 获取输入代码段的所有标识符
     const identifiers = this.extractIdentifiers(inputCode);
+    // 抽取所有含有标识符的声明
     for (const id in identifiers) {
       Declarations.push(...(this.nameMap.get(id) || []));
     }
 
-    const selectedItems: CSTItem[] = [];
-    const deduplicate = new Set<string>();
+    const selectedItems: CSTItem[] = []; // 待选项
+    const deduplicate = new Set<string>(); // 去重
 
     for (const item of Declarations) {
       if (!deduplicate.has(this.getItemKey(item))) {
@@ -30,6 +32,7 @@ export class CSTCache {
       }
     }
 
+    // 限制总长度
     let totalLength = selectedItems.reduce(
       (sum, item) => sum + item.signature.length,
       0,
@@ -42,7 +45,9 @@ export class CSTCache {
     const pendingOptions: { score: number; item: CSTItem }[] = [];
 
     this.itemMap.forEach((v, k) => {
+      // 遍历所有声明
       if (!deduplicate.has(k)) {
+        // 智能打分，获取列表
         const score = this.calculateItemScore(
           v,
           inputCode,
@@ -52,10 +57,10 @@ export class CSTCache {
         pendingOptions.push({ score, item: v });
       }
     });
+    // 根据分数排序
     pendingOptions.sort((a, b) => b.score - a.score);
+    // 添加到待选项
     for (const { item } of pendingOptions) {
-      const itemKey = this.getItemKey(item);
-
       const itemLength = item.signature.length;
       if (totalLength + itemLength > maxLength) {
         break;
@@ -121,7 +126,7 @@ export class CSTCache {
     currentDir: string,
     historySequence: string[],
   ): number {
-    // 1. Jaccard相似度（40%）
+    // 1. Jacard相似度（40%）
     const inputCodeSet = this.tokenize(inputCode);
     const jaccardScore =
       this.calculateJaccardSimilarity(inputCodeSet, item.tokens) * 0.4;
